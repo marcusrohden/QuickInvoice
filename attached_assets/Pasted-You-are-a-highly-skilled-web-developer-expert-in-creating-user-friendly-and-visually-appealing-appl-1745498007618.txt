@@ -1,0 +1,123 @@
+You are a highly skilled web developer, expert in creating user-friendly and visually appealing applications. Your task is to create a web-based roulette simulator using Next.js, incorporating a modern design aesthetic inspired by V0, and utilizing the shadcn/ui component library.
+
+The application should simulate a simplified roulette game with the following features:
+
+Core Functionality:
+
+Customizable Game:
+
+Allow the user to specify the number of slots on the roulette wheel (default: 25).
+
+Allow the user to specify the target slot (1-based index) they are betting on (default: 1).
+
+Allow the user to specify the cost per attempt/spin (default: $25).
+
+Allow the user to specify the prize payout for hitting a non-target slot (default: $10).
+
+Allow the user to specify the prize payout for hitting the target slot (default: $800).
+
+Simulation Logic:
+
+When the user starts a simulation, the application should:
+
+Simulate spins of the roulette wheel until the target slot is hit.
+
+For each spin, generate a random result between 1 and the total number of slots.
+
+Calculate the cost of each spin.
+
+Determine the prize payout (either the 'non-target slot prize' or the 'target slot prize').
+
+Calculate the profit/loss for each spin (prize - cost).
+
+Results Display:
+
+After the target slot is hit, display:
+
+The attempt number on which the target slot was hit.
+
+The total cost spent by the user.
+
+The final spin result.
+
+The prize won.
+
+Simulation History:
+
+Display a table showing the history of each spin in the simulation:
+
+Attempt number.
+
+Spin result.
+
+Cost of the spin.
+
+Prize won for that spin.
+
+Profit/loss for that spin (with visual styling: green for profit, red for loss).
+
+The table should be scrollable if the history is long.
+
+House Statistics:
+
+Display, above the history table:
+
+The total house earnings (total cost from all simulations - total prizes paid out).
+
+The total number of spins across all simulations.
+
+The total number of non-target slot prizes awarded.
+
+The total number of target slot prizes awarded.
+
+Clear History:
+
+Provide a button to clear the simulation history table and reset all house statistics (house earnings, total spins, and prize counts).
+
+User Interface (V0 Inspired with shadcn/ui):
+
+Modern Design: Use a clean, minimalist design aesthetic, similar to V0. Prioritize clarity, readability, and ease of use.
+
+shadcn/ui Components: Use components from the shadcn/ui library where appropriate (e.g., Input, Button, Table).  Customize these components as needed to fit the V0 aesthetic.
+
+Input Fields: Use shadcn/ui's Input component for the input fields.
+
+Buttons: Use shadcn/ui's Button component.
+
+Table Styling: Use shadcn/ui's Table component.  Customize the table styling as needed.
+
+Layout: Organize the elements on the page in a logical and intuitive way.  Consider using a grid or flexbox layout (which can be facilitated by shadcn/ui's layout components or utility classes, if available).
+
+Typography: Use the default typography provided by shadcn/ui, or customize it if needed to align with V0.
+
+Responsiveness: Ensure the application is responsive and works well on different screen sizes.  Shadcn/ui should help with this.
+
+Technical Requirements:
+
+Next.js: Use Next.js for the framework.
+
+React: Build the UI using React components.
+
+shadcn/ui: Use the shadcn/ui component library.
+
+State Management: Use React's useState hook for managing component state. No external state management libraries (like Redux) are needed for this project.
+
+Example Structure (Conceptual):
+
+You might structure your components like this:
+
+pages/index.js: Main page component, containing the overall layout.
+
+components/GameParameters.js: Component for the input fields (slots, target slot, costs, prizes).  Use shadcn/ui Input.
+
+components/SimulationResults.js: Component for displaying the immediate results of a simulation.
+
+components/SimulationHistory.js: Component for rendering the simulation history table. Use shadcn/ui Table.
+
+components/HouseStats.js: Component for displaying the house statistics.
+
+components/Button.js: Reusable button component. Use shadcn/ui Button.
+
+Deliverable:
+
+Provide the complete Next.js code for the roulette simulator application, including all components and styling. The code should be well-organized, readable, and follow best practices.  Leverage shadcn/ui components where appropriate and customize them to achieve the desired V0 aesthetic.
