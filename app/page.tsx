@@ -10,6 +10,7 @@ interface SpinResult {
   cost: number
   prize: number
   profit: number
+  slotsRemaining?: number // Optional field to track remaining slots in removal mode
 }
 
 interface SimulationStats {
@@ -34,6 +35,7 @@ export default function Home() {
   const [costPerSpin, setCostPerSpin] = useState(25)
   const [nonTargetPrize, setNonTargetPrize] = useState(10)
   const [targetPrize, setTargetPrize] = useState(800)
+  const [removeHitSlots, setRemoveHitSlots] = useState(false)
 
   // Simulation results
   const [simulationStats, setSimulationStats] = useState<SimulationStats | null>(null)
@@ -98,6 +100,10 @@ export default function Home() {
     }
   }
 
+  const toggleRemoveHitSlots = () => {
+    setRemoveHitSlots(prev => !prev)
+  }
+
   const runSimulation = () => {
     // Validate that target slot is valid
     if (!validateTargetSlot(targetSlot, slots)) {
@@ -108,24 +114,49 @@ export default function Home() {
     let currentSpinResult: number
     let totalCost = 0
     let history: SpinResult[] = []
+    
+    // For removal mode, keep track of available slots
+    let availableSlots = Array.from({ length: slots }, (_, i) => i + 1)
+    let targetFound = false
 
     // Continue spinning until we hit the target slot
     do {
-      currentSpinResult = Math.floor(Math.random() * slots) + 1
+      if (removeHitSlots) {
+        // In removal mode, spin from the available slots
+        const randomIndex = Math.floor(Math.random() * availableSlots.length)
+        currentSpinResult = availableSlots[randomIndex]
+        
+        // Remove the slot that was hit
+        availableSlots.splice(randomIndex, 1)
+        
+        // Check if we hit the target
+        targetFound = currentSpinResult === targetSlot
+      } else {
+        // Standard mode - random selection from all slots
+        currentSpinResult = Math.floor(Math.random() * slots) + 1
+        targetFound = currentSpinResult === targetSlot
+      }
+      
       totalCost += costPerSpin
       
       const isTargetHit = currentSpinResult === targetSlot
       const prize = isTargetHit ? targetPrize : nonTargetPrize
       const profit = prize - costPerSpin
       
-      // Add to history
-      history.push({
+      // Add to history with remaining slots info for removal mode
+      const historyEntry: SpinResult = {
         attempt,
         result: currentSpinResult,
         cost: costPerSpin,
         prize,
         profit
-      })
+      }
+      
+      if (removeHitSlots) {
+        historyEntry.slotsRemaining = availableSlots.length
+      }
+      
+      history.push(historyEntry)
       
       // Update house stats
       if (isTargetHit) {
@@ -145,15 +176,21 @@ export default function Home() {
       }
       
       attempt++
-    } while (currentSpinResult !== targetSlot)
+      
+      // In removal mode, we continue until target is found or no slots remain
+      if (removeHitSlots && availableSlots.length === 0 && !targetFound) {
+        break; // All slots removed and target not found
+      }
+      
+    } while (!targetFound)
     
     // Set simulation results
     setSimulationStats({
       targetHitAttempt: attempt - 1,
       totalCost,
-      finalSpinResult: currentSpinResult,
-      finalPrize: targetPrize,
-      finalProfit: targetPrize - costPerSpin
+      finalSpinResult: currentSpinResult!,
+      finalPrize: targetFound ? targetPrize : 0,
+      finalProfit: targetFound ? targetPrize - totalCost : -totalCost
     })
     
     // Update spin history
@@ -168,6 +205,86 @@ export default function Home() {
       totalSpins: 0,
       nonTargetPrizes: 0,
       targetPrizes: 0
+    })
+  }
+  
+  // Single Spin Function
+  const singleSpin = () => {
+    // Validate that target slot is valid
+    if (!validateTargetSlot(targetSlot, slots)) {
+      return;
+    }
+    
+    let currentSpinResult: number
+    
+    // For removal mode, keep track of available slots if this is a new simulation
+    let availableSlots = Array.from({ length: slots }, (_, i) => i + 1)
+    
+    // If we have history and are in removal mode, reconstruct the available slots
+    if (removeHitSlots && spinHistory.length > 0) {
+      const hitSlots = new Set(spinHistory.map(spin => spin.result))
+      availableSlots = availableSlots.filter(slot => !hitSlots.has(slot))
+      
+      // If no slots remain, reset
+      if (availableSlots.length === 0) {
+        availableSlots = Array.from({ length: slots }, (_, i) => i + 1)
+      }
+    }
+    
+    if (removeHitSlots) {
+      // In removal mode, spin from the available slots
+      const randomIndex = Math.floor(Math.random() * availableSlots.length)
+      currentSpinResult = availableSlots[randomIndex]
+    } else {
+      // Standard mode - random selection from all slots
+      currentSpinResult = Math.floor(Math.random() * slots) + 1
+    }
+    
+    const isTargetHit = currentSpinResult === targetSlot
+    const prize = isTargetHit ? targetPrize : nonTargetPrize
+    const profit = prize - costPerSpin
+    
+    // Create history entry
+    const attempt = spinHistory.length + 1
+    const historyEntry: SpinResult = {
+      attempt,
+      result: currentSpinResult,
+      cost: costPerSpin,
+      prize,
+      profit
+    }
+    
+    if (removeHitSlots) {
+      historyEntry.slotsRemaining = availableSlots.length - 1 // Subtract 1 for the slot we just hit
+    }
+    
+    // Update spin history
+    setSpinHistory(prevHistory => [...prevHistory, historyEntry])
+    
+    // Update house stats
+    if (isTargetHit) {
+      setHouseStats(prev => ({
+        ...prev,
+        totalEarnings: prev.totalEarnings + costPerSpin - prize,
+        totalSpins: prev.totalSpins + 1,
+        targetPrizes: prev.targetPrizes + 1
+      }))
+    } else {
+      setHouseStats(prev => ({
+        ...prev,
+        totalEarnings: prev.totalEarnings + costPerSpin - prize,
+        totalSpins: prev.totalSpins + 1,
+        nonTargetPrizes: prev.nonTargetPrizes + 1
+      }))
+    }
+    
+    // Set simulation results based on the latest spin
+    setSimulationStats({
+      targetHitAttempt: attempt,
+      totalCost: costPerSpin,
+      finalSpinResult: currentSpinResult,
+      finalPrize: prize,
+      finalProfit: profit
     })
   }
 
@@ -248,8 +365,23 @@ export default function Home() {
               </div>
             </div>
             
+            <div className="form-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={removeHitSlots}
+                  onChange={toggleRemoveHitSlots}
+                />
+                <span>Remove Hit Slots Mode</span>
+              </label>
+              <p className="text-hint">
+                When enabled, each slot is removed after being hit (like drawing cards from a deck)
+              </p>
+            </div>
+            
             <div className="button-group">
               <button onClick={runSimulation}>Spin Until Target Hit</button>
+              <button onClick={singleSpin}>Single Spin</button>
               <button className="button-outline" onClick={clearHistory}>Clear History</button>
             </div>
           </div>
@@ -264,7 +396,7 @@ export default function Home() {
               <div className="results-grid">
                 <div className="result-card">
                   <div className="result-content">
-                    <span className="result-label">Target Hit on Attempt</span>
+                    <span className="result-label">Last Spin Attempt</span>
                     <span className="result-value">{simulationStats.targetHitAttempt}</span>
                   </div>
                 </div>
@@ -278,7 +410,7 @@ export default function Home() {
                 
                 <div className="result-card">
                   <div className="result-content">
-                    <span className="result-label">Final Spin Result</span>
+                    <span className="result-label">Last Spin Result</span>
                     <span className="result-value">Slot {simulationStats.finalSpinResult}</span>
                   </div>
                 </div>
@@ -293,8 +425,8 @@ export default function Home() {
                 <div className="result-card wide">
                   <div className="result-content">
                     <span className="result-label">Net Profit/Loss</span>
-                    <span className={`result-value ${simulationStats.finalProfit - simulationStats.totalCost + simulationStats.finalPrize >= 0 ? 'profit' : 'loss'}`}>
-                      {formatCurrency(simulationStats.finalProfit - simulationStats.totalCost + simulationStats.finalPrize)}
+                    <span className={`result-value ${simulationStats.finalProfit >= 0 ? 'profit' : 'loss'}`}>
+                      {formatCurrency(simulationStats.finalProfit)}
                     </span>
                   </div>
                 </div>
@@ -365,6 +497,7 @@ export default function Home() {
                     <th>Cost</th>
                     <th>Prize</th>
                     <th>Profit/Loss</th>
+                    {removeHitSlots && <th>Slots Remaining</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -377,6 +510,7 @@ export default function Home() {
                       <td className={spin.profit >= 0 ? 'profit' : 'loss'}>
                         {formatCurrency(spin.profit)}
                       </td>
+                      {removeHitSlots && <td>{spin.slotsRemaining ?? 'N/A'}</td>}
                     </tr>
                   ))}
                 </tbody>
