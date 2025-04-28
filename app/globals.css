@@ -559,3 +559,13 @@ tr:last-child td {
   border-bottom: 3px solid var(--primary);
   margin-bottom: -1px;
 }
+
+/* Utility Classes */
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+/* Hit Slots Status */
+.hit-slots-status {
+  margin-top: 1rem;
+}
