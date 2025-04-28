@@ -223,6 +223,14 @@ export default function Home() {
     let totalCost = 0
     let currentSpinResult: number
     let history: SpinResult[] = []
+    let housePrizeDistribution: Record<string, number> = {}
+    let houseEarnings = 0
+    
+    // Start with a copy of the current house stats
+    if (houseStats.prizeDistribution) {
+      housePrizeDistribution = { ...houseStats.prizeDistribution }
+    }
+    houseEarnings = houseStats.totalEarnings
     
     for (let attempt = 1; attempt <= spins; attempt++) {
       // Random selection from all slots
@@ -233,45 +241,62 @@ export default function Home() {
       const { prize, prizeType } = determinePrizeHit(currentSpinResult)
       const profit = prize - costPerSpin
       
-      // Add to history
-      history.push({
-        attempt: spinHistory.length + attempt,
-        result: currentSpinResult,
-        cost: costPerSpin,
-        prize,
-        profit,
-        prizeType
-      })
+      // Add to history (but limit to last 100 spins for memory/performance)
+      if (spins <= 100 || attempt > spins - 100) {
+        history.push({
+          attempt: spinHistory.length + attempt,
+          result: currentSpinResult,
+          cost: costPerSpin,
+          prize,
+          profit,
+          prizeType
+        })
+      }
       
-      // Update house stats
-      setHouseStats(prev => {
-        // Update prize distribution count
-        const updatedDistribution = { ...prev.prizeDistribution }
-        updatedDistribution[prizeType] = (updatedDistribution[prizeType] || 0) + 1
-        
-        return {
-          totalEarnings: prev.totalEarnings + costPerSpin - prize,
-          totalSpins: prev.totalSpins + 1,
-          prizeDistribution: updatedDistribution
-        }
-      })
+      // Update house stats (locally rather than via setState to improve performance)
+      housePrizeDistribution[prizeType] = (housePrizeDistribution[prizeType] || 0) + 1
+      houseEarnings += costPerSpin - prize
     }
     
     // Update results for the last spin
-    const lastSpin = history[history.length - 1]
+    const lastAttemptNum = spinHistory.length + spins
+    const lastResult = history.length > 0 
+      ? history[history.length - 1] 
+      : { 
+          attempt: lastAttemptNum,
+          result: currentSpinResult!,
+          cost: costPerSpin,
+          prize: 0,
+          profit: -costPerSpin,
+          prizeType: 'Unknown'
+        }
     
     // Set simulation results
     setSimulationStats({
-      targetHitAttempt: lastSpin.attempt,
+      targetHitAttempt: lastAttemptNum,
       totalCost,
-      finalSpinResult: lastSpin.result,
-      finalPrize: lastSpin.prize,
-      finalProfit: lastSpin.prize - totalCost,
-      finalPrizeType: lastSpin.prizeType
+      finalSpinResult: lastResult.result,
+      finalPrize: lastResult.prize,
+      finalProfit: lastResult.prize - totalCost,
+      finalPrizeType: lastResult.prizeType
     })
     
-    // Update spin history
-    setSpinHistory(prevHistory => [...prevHistory, ...history])
+    // Update spin history (limit to most recent entries if there are too many)
+    setSpinHistory(prevHistory => {
+      // Keep at most 500 total spins in history to prevent browser slowdowns
+      const combinedHistory = [...prevHistory, ...history]
+      if (combinedHistory.length > 500) {
+        return combinedHistory.slice(combinedHistory.length - 500)
+      }
+      return combinedHistory
+    })
+    
+    // Update house stats in a single update at the end
+    setHouseStats(prev => ({
+      totalEarnings: houseEarnings,
+      totalSpins: prev.totalSpins + spins,
+      prizeDistribution: housePrizeDistribution
+    }))
   }
   
   const clearHistory = () => {
@@ -458,6 +483,7 @@ export default function Home() {
             <div className="divider"></div>
             
             <div className="button-group">
+              <button onClick={() => spinMultipleTimes(1000)}>Spin 1000 Times</button>
               <button onClick={() => spinMultipleTimes(100)}>Spin 100 Times</button>
               <button onClick={() => spinMultipleTimes(10)}>Spin 10 Times</button>
               <button onClick={singleSpin}>Single Spin</button>
