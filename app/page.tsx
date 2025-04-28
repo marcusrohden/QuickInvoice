@@ -57,6 +57,9 @@ export default function Home() {
   
   // Modal state
   const [showPrizeModal, setShowPrizeModal] = useState(false)
+  
+  // Simulation mode: 'normal' or 'removeHitSlots'
+  const [simulationMode, setSimulationMode] = useState<'normal' | 'removeHitSlots'>('normal')
 
   // Simulation results
   const [simulationStats, setSimulationStats] = useState<SimulationStats | null>(null)
@@ -145,19 +148,32 @@ export default function Home() {
     setPrizeConfigs(prizeConfigs.filter(prize => prize.id !== id))
   }
   
-  // Determine which prize was hit based on slot number
-  const determinePrizeHit = (slotNumber: number): { prize: number, prizeType: string } => {
+  // Determine which prize was hit based on slot number and return more detailed info for remove hit slots mode
+  const determinePrizeHit = (
+    slotNumber: number, 
+    configs: PrizeConfig[] = prizeConfigs
+  ): { 
+    prize: number, 
+    prizeType: string, 
+    prizeIndex?: number, 
+    isSpecialPrize: boolean, 
+    relativeSlotIndex?: number 
+  } => {
     let slotCounter = 0
     
     // Check if the slot hit any of the special prize configurations
-    for (const prizeConfig of prizeConfigs) {
+    for (let i = 0; i < configs.length; i++) {
+      const prizeConfig = configs[i]
       const startSlot = slotCounter + 1
       const endSlot = slotCounter + prizeConfig.slots
       
       if (slotNumber >= startSlot && slotNumber <= endSlot) {
         return { 
           prize: prizeConfig.value,
-          prizeType: prizeConfig.name
+          prizeType: prizeConfig.name,
+          prizeIndex: i,
+          isSpecialPrize: true,
+          relativeSlotIndex: slotNumber - startSlot // Position within this prize's slots
         }
       }
       
@@ -167,8 +183,140 @@ export default function Home() {
     // If no special prize was hit, return the default prize
     return { 
       prize: defaultPrize,
-      prizeType: 'Default Prize'
+      prizeType: 'Default Prize',
+      isSpecialPrize: false,
+      relativeSlotIndex: slotNumber - slotCounter // Position within default slots
     }
+  }
+  
+  // Run breaks for the "Remove Hit Slots" mode
+  const runBreaks = (breaks: number = 1) => {
+    let totalCost = 0
+    let history: SpinResult[] = []
+    let housePrizeDistribution: Record<string, number> = {}
+    let houseEarnings = 0
+    let breakCount = 0;
+    
+    // Create copies of the state to work with
+    let currentPrizeConfigs = [...prizeConfigs]
+    let currentTotalSlots = totalSlots
+    
+    // Start with a copy of the current house stats
+    if (houseStats.prizeDistribution) {
+      housePrizeDistribution = { ...houseStats.prizeDistribution }
+    }
+    houseEarnings = houseStats.totalEarnings
+    
+    // Continue until we've completed all breaks or there are no special prize slots left
+    for (let breakNum = 1; breakNum <= breaks; breakNum++) {
+      let breakComplete = false
+      let breakAttempts = 0
+      
+      // Calculate total special prize slots
+      const specialPrizeSlotCount = currentPrizeConfigs.reduce((total, prize) => total + prize.slots, 0)
+      
+      // If no special prize slots are left, stop the breaks
+      if (specialPrizeSlotCount === 0) {
+        break
+      }
+      
+      // Keep spinning until we hit a special prize
+      while (!breakComplete) {
+        breakAttempts++
+        
+        // Random selection from all slots
+        const currentSpinResult = Math.floor(Math.random() * currentTotalSlots) + 1
+        totalCost += costPerSpin
+        
+        // Determine prize based on slot hit
+        const hitResult = determinePrizeHit(currentSpinResult, currentPrizeConfigs)
+        const profit = hitResult.prize - costPerSpin
+        
+        // Add to history (but limit to last 100 spins for memory/performance)
+        if (breakNum === breaks || breaks <= 10) {
+          history.push({
+            attempt: spinHistory.length + history.length + 1,
+            result: currentSpinResult,
+            cost: costPerSpin,
+            prize: hitResult.prize,
+            profit,
+            prizeType: hitResult.prizeType
+          })
+        }
+        
+        // Update house stats locally
+        housePrizeDistribution[hitResult.prizeType] = (housePrizeDistribution[hitResult.prizeType] || 0) + 1
+        houseEarnings += costPerSpin - hitResult.prize
+        
+        // If we hit a special prize, remove that slot from the configuration
+        if (hitResult.isSpecialPrize && hitResult.prizeIndex !== undefined) {
+          const prizeIndex = hitResult.prizeIndex
+          const hitConfig = currentPrizeConfigs[prizeIndex]
+          
+          // If this prize has more than one slot, reduce the count
+          if (hitConfig.slots > 1) {
+            currentPrizeConfigs = currentPrizeConfigs.map((config, idx) => 
+              idx === prizeIndex 
+                ? { ...config, slots: config.slots - 1 }
+                : config
+            )
+          } else {
+            // If this was the last slot for this prize, remove it completely
+            currentPrizeConfigs = currentPrizeConfigs.filter((_, idx) => idx !== prizeIndex)
+          }
+          
+          // Reduce the total slot count
+          currentTotalSlots--
+          
+          // This break is complete because we hit a special prize
+          breakComplete = true
+          breakCount++
+        }
+      }
+    }
+    
+    // Update the prize configurations state with the new values
+    setPrizeConfigs(currentPrizeConfigs)
+    setTotalSlots(currentTotalSlots)
+    
+    // Set simulation results based on the last break
+    const lastAttemptNum = spinHistory.length + history.length
+    const lastResult = history.length > 0 
+      ? history[history.length - 1] 
+      : { 
+          attempt: lastAttemptNum,
+          result: 0,
+          cost: breakCount * costPerSpin,
+          prize: 0,
+          profit: -breakCount * costPerSpin,
+          prizeType: 'Unknown'
+        }
+    
+    setSimulationStats({
+      targetHitAttempt: breakCount, // The number of breaks completed
+      totalCost,
+      finalSpinResult: lastResult.result,
+      finalPrize: lastResult.prize,
+      finalProfit: totalCost - breakCount * costPerSpin,
+      finalPrizeType: `Removed ${breakCount} prize${breakCount !== 1 ? 's' : ''}`
+    })
+    
+    // Update spin history (limit to most recent entries if there are too many)
+    setSpinHistory(prevHistory => {
+      // Keep at most 500 total spins in history to prevent browser slowdowns
+      const combinedHistory = [...prevHistory, ...history]
+      if (combinedHistory.length > 500) {
+        return combinedHistory.slice(combinedHistory.length - 500)
+      }
+      return combinedHistory
+    })
+    
+    // Update house stats in a single update at the end
+    setHouseStats(prev => ({
+      totalEarnings: houseEarnings,
+      totalSpins: prev.totalSpins + history.length,
+      prizeDistribution: housePrizeDistribution
+    }))
   }
   
   // Single Spin Function
@@ -312,6 +460,21 @@ export default function Home() {
   return (
     <main>
       <h1 className="main-heading">Roulette Simulator</h1>
+      
+      <div className="tab-container">
+        <div 
+          className={`tab ${simulationMode === 'normal' ? 'active' : ''}`}
+          onClick={() => setSimulationMode('normal')}
+        >
+          Normal Mode
+        </div>
+        <div 
+          className={`tab ${simulationMode === 'removeHitSlots' ? 'active' : ''}`}
+          onClick={() => setSimulationMode('removeHitSlots')}
+        >
+          Remove Hit Slots
+        </div>
+      </div>
       
       <div className="grid">
         <div className="card">
@@ -483,10 +646,23 @@ export default function Home() {
             <div className="divider"></div>
             
             <div className="button-group">
-              <button onClick={() => spinMultipleTimes(1000)}>Spin 1000 Times</button>
-              <button onClick={() => spinMultipleTimes(100)}>Spin 100 Times</button>
-              <button onClick={() => spinMultipleTimes(10)}>Spin 10 Times</button>
-              <button onClick={singleSpin}>Single Spin</button>
+              {simulationMode === 'normal' ? (
+                // Normal mode buttons
+                <>
+                  <button onClick={() => spinMultipleTimes(1000)}>Spin 1000 Times</button>
+                  <button onClick={() => spinMultipleTimes(100)}>Spin 100 Times</button>
+                  <button onClick={() => spinMultipleTimes(10)}>Spin 10 Times</button>
+                  <button onClick={singleSpin}>Single Spin</button>
+                </>
+              ) : (
+                // Remove Hit Slots mode buttons
+                <>
+                  <button onClick={() => runBreaks(1000)}>1000 Breaks</button>
+                  <button onClick={() => runBreaks(100)}>100 Breaks</button>
+                  <button onClick={() => runBreaks(10)}>10 Breaks</button>
+                  <button onClick={() => runBreaks(1)}>Single Break</button>
+                </>
+              )}
               <button className="button-outline" onClick={clearHistory}>Clear History</button>
             </div>
           </div>
