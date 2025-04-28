@@ -458,6 +458,7 @@ export default function Home() {
             <div className="divider"></div>
             
             <div className="button-group">
+              <button onClick={() => spinMultipleTimes(100)}>Spin 100 Times</button>
               <button onClick={() => spinMultipleTimes(10)}>Spin 10 Times</button>
               <button onClick={singleSpin}>Single Spin</button>
               <button className="button-outline" onClick={clearHistory}>Clear History</button>
@@ -518,7 +519,7 @@ export default function Home() {
             <div className="results-grid">
               <div className="result-card">
                 <div className="result-content">
-                  <span className="result-label">Last Spin Attempt</span>
+                  <span className="result-label">Total Spins</span>
                   <span className="result-value">{simulationStats.targetHitAttempt}</span>
                 </div>
               </div>
