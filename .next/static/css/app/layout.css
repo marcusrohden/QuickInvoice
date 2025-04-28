@@ -351,6 +351,13 @@ tr:last-child td {
   font-weight: 600;
 }
 
+.stat-hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  display: block;
+  margin-top: 0.25rem;
+}
+
 .divider {
   height: 1px;
   background-color: var(--border);

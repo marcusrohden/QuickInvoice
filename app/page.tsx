@@ -514,6 +514,24 @@ export default function Home() {
                   <span className="stat-value">{houseStats.totalSpins}</span>
                 </div>
               </div>
+              
+              <div className="stat-card">
+                <div className="stat-content">
+                  <span className="stat-label">Profit Rate</span>
+                  <span className={`stat-value ${houseStats.totalEarnings >= 0 ? 'profit' : 'loss'}`}>
+                    {houseStats.totalSpins > 0 
+                      ? `${((houseStats.totalEarnings / (houseStats.totalSpins * costPerSpin)) * 100).toFixed(2)}%`
+                      : '0.00%'
+                    }
+                  </span>
+                  <span className="stat-hint">
+                    {houseStats.totalSpins > 0 
+                      ? `${formatCurrency(houseStats.totalEarnings)} / ${formatCurrency(houseStats.totalSpins * costPerSpin)}`
+                      : ''
+                    }
+                  </span>
+                </div>
+              </div>
             </div>
             
             <div className="divider"></div>
