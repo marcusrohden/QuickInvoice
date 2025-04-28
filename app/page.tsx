@@ -54,6 +54,9 @@ export default function Home() {
   const [newPrizeName, setNewPrizeName] = useState('')
   const [newPrizeValue, setNewPrizeValue] = useState(20)
   const [newPrizeSlots, setNewPrizeSlots] = useState(1)
+  
+  // Modal state
+  const [showPrizeModal, setShowPrizeModal] = useState(false)
 
   // Simulation results
   const [simulationStats, setSimulationStats] = useState<SimulationStats | null>(null)
@@ -331,70 +334,125 @@ export default function Home() {
               
               <div className="divider"></div>
               
-              <h3 className="subsection-heading">Special Prizes</h3>
+              <div className="prize-table-header">
+                <h3 className="subsection-heading">Prize Configurations</h3>
+                <button 
+                  className="button-icon" 
+                  onClick={() => setShowPrizeModal(true)}
+                  title="Add New Prize"
+                >
+                  +
+                </button>
+              </div>
               
-              {prizeConfigs.map((prize, index) => (
-                <div key={prize.id} className="prize-config-item">
-                  <div className="prize-config-details">
-                    <span className="prize-name">{prize.name}</span>
-                    <span className="prize-value">{formatCurrency(prize.value)}</span>
-                    <span className="prize-slots">{prize.slots} slot{prize.slots !== 1 ? 's' : ''}</span>
+              <div className="prize-table-container">
+                <table className="prize-table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Quantity</th>
+                      <th>Value</th>
+                      <th>Total</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {prizeConfigs.map((prize) => (
+                      <tr key={prize.id}>
+                        <td>{prize.name}</td>
+                        <td>{prize.slots} slot{prize.slots !== 1 ? 's' : ''}</td>
+                        <td>{formatCurrency(prize.value)}</td>
+                        <td>{formatCurrency(prize.value * prize.slots)}</td>
+                        <td>
+                          <button 
+                            className="button-small button-danger"
+                            onClick={() => removePrizeConfig(prize.id)}
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="default-prize-row">
+                      <td>Remaining Slots (Default)</td>
+                      <td>{remainingSlots} slot{remainingSlots !== 1 ? 's' : ''}</td>
+                      <td>{formatCurrency(defaultPrize)}</td>
+                      <td>{formatCurrency(defaultPrize * remainingSlots)}</td>
+                      <td></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Prize Modal */}
+              {showPrizeModal && (
+                <div className="modal-overlay">
+                  <div className="modal-content">
+                    <div className="modal-header">
+                      <h3>Add New Prize</h3>
+                      <button 
+                        className="button-icon" 
+                        onClick={() => setShowPrizeModal(false)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <div className="modal-body">
+                      <div className="form-group">
+                        <label htmlFor="newPrizeName">Prize Name</label>
+                        <input
+                          id="newPrizeName"
+                          type="text"
+                          value={newPrizeName}
+                          onChange={(e) => setNewPrizeName(e.target.value)}
+                          placeholder="e.g., Jackpot"
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="newPrizeValue">Prize Value</label>
+                        <input
+                          id="newPrizeValue"
+                          type="number"
+                          min="1"
+                          value={newPrizeValue}
+                          onChange={(e) => setNewPrizeValue(parseInt(e.target.value) || 0)}
+                        />
+                        <p className="text-hint">{formatCurrency(newPrizeValue)}</p>
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="newPrizeSlots">Number of Slots</label>
+                        <input
+                          id="newPrizeSlots"
+                          type="number"
+                          min="1"
+                          max={totalSlots - prizeConfigs.reduce((total, prize) => total + prize.slots, 0)}
+                          value={newPrizeSlots}
+                          onChange={(e) => setNewPrizeSlots(parseInt(e.target.value) || 1)}
+                        />
+                      </div>
+                    </div>
+                    <div className="modal-footer">
+                      <button
+                        onClick={() => setShowPrizeModal(false)}
+                        className="button-outline"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={() => {
+                          addPrizeConfig();
+                          setShowPrizeModal(false);
+                        }}
+                        disabled={totalSlots - prizeConfigs.reduce((total, prize) => total + prize.slots, 0) < newPrizeSlots || !newPrizeName.trim()}
+                      >
+                        Add Prize
+                      </button>
+                    </div>
                   </div>
-                  <button 
-                    className="button-small button-danger"
-                    onClick={() => removePrizeConfig(prize.id)}
-                  >
-                    Remove
-                  </button>
                 </div>
-              ))}
-              
-              <div className="divider"></div>
-              
-              <h3 className="subsection-heading">Add New Prize</h3>
-              
-              <div className="form-group">
-                <label htmlFor="newPrizeName">Prize Name</label>
-                <input
-                  id="newPrizeName"
-                  type="text"
-                  value={newPrizeName}
-                  onChange={(e) => setNewPrizeName(e.target.value)}
-                  placeholder="e.g., Jackpot"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="newPrizeValue">Prize Value</label>
-                <input
-                  id="newPrizeValue"
-                  type="number"
-                  min="1"
-                  value={newPrizeValue}
-                  onChange={(e) => setNewPrizeValue(parseInt(e.target.value) || 0)}
-                />
-                <p className="text-hint">{formatCurrency(newPrizeValue)}</p>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="newPrizeSlots">Number of Slots</label>
-                <input
-                  id="newPrizeSlots"
-                  type="number"
-                  min="1"
-                  max={totalSlots - prizeConfigs.reduce((total, prize) => total + prize.slots, 0)}
-                  value={newPrizeSlots}
-                  onChange={(e) => setNewPrizeSlots(parseInt(e.target.value) || 1)}
-                />
-              </div>
-              
-              <button 
-                onClick={addPrizeConfig}
-                disabled={totalSlots - prizeConfigs.reduce((total, prize) => total + prize.slots, 0) < newPrizeSlots}
-                className="button-full"
-              >
-                Add Prize Configuration
-              </button>
+              )}
             </div>
             
             <div className="divider"></div>
