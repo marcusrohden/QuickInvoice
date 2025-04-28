@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { formatCurrency } from '@/lib/utils'
 
 // Define types
@@ -10,6 +10,7 @@ interface SpinResult {
   cost: number
   prize: number
   profit: number
+  prizeType: string
 }
 
 interface SimulationStats {
@@ -18,22 +19,41 @@ interface SimulationStats {
   finalSpinResult: number
   finalPrize: number
   finalProfit: number
+  finalPrizeType: string
 }
 
 interface HouseStatsType {
   totalEarnings: number
   totalSpins: number
-  nonTargetPrizes: number
-  targetPrizes: number
+  prizeDistribution: Record<string, number> // Count of each prize type hit
+}
+
+interface PrizeConfig {
+  id: string
+  name: string
+  value: number
+  slots: number
 }
 
 export default function Home() {
   // Game parameters state
-  const [slots, setSlots] = useState(25)
-  const [targetSlot, setTargetSlot] = useState(1)
+  const [totalSlots, setTotalSlots] = useState(25)
   const [costPerSpin, setCostPerSpin] = useState(25)
-  const [nonTargetPrize, setNonTargetPrize] = useState(10)
-  const [targetPrize, setTargetPrize] = useState(800)
+  const [defaultPrize, setDefaultPrize] = useState(10)
+  
+  // Prize configurations with their quantity and value
+  const [prizeConfigs, setPrizeConfigs] = useState<PrizeConfig[]>([
+    { id: "prize1", name: "Prize X", value: 50, slots: 1 },
+    { id: "prize2", name: "Prize Z", value: 30, slots: 3 }
+  ])
+  
+  // Calculate remaining slots after special prizes
+  const [remainingSlots, setRemainingSlots] = useState(21)
+  
+  // Input for new prize configuration
+  const [newPrizeName, setNewPrizeName] = useState('')
+  const [newPrizeValue, setNewPrizeValue] = useState(20)
+  const [newPrizeSlots, setNewPrizeSlots] = useState(1)
 
   // Simulation results
   const [simulationStats, setSimulationStats] = useState<SimulationStats | null>(null)
@@ -43,40 +63,25 @@ export default function Home() {
   const [houseStats, setHouseStats] = useState<HouseStatsType>({
     totalEarnings: 0,
     totalSpins: 0,
-    nonTargetPrizes: 0,
-    targetPrizes: 0
+    prizeDistribution: {} // Initialize empty object for prize distribution counts
   })
 
-  // Validation error state
-  const [targetSlotError, setTargetSlotError] = useState('')
+  // Calculate remaining slots whenever prize configurations change
+  useEffect(() => {
+    const usedSlots = prizeConfigs.reduce((total, prize) => total + prize.slots, 0)
+    const remaining = totalSlots - usedSlots
+    setRemainingSlots(remaining > 0 ? remaining : 0)
+  }, [prizeConfigs, totalSlots])
 
-  // Validate target slot is within range when slots or targetSlot changes
-  const validateTargetSlot = (target: number, totalSlots: number) => {
-    if (target > totalSlots) {
-      setTargetSlotError(`Target slot must be between 1 and ${totalSlots}`)
-      return false
-    } else {
-      setTargetSlotError('')
-      return true
-    }
-  }
-
-  const handleSlotsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handler for total slots change
+  const handleTotalSlotsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value)
     if (!isNaN(value) && value > 0) {
-      setSlots(value)
-      validateTargetSlot(targetSlot, value)
+      setTotalSlots(value)
     }
   }
 
-  const handleTargetSlotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value)
-    if (!isNaN(value) && value > 0) {
-      setTargetSlot(value)
-      validateTargetSlot(value, slots)
-    }
-  }
-
+  // Handler for cost per spin change
   const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value)
     if (!isNaN(value) && value >= 0) {
@@ -84,79 +89,182 @@ export default function Home() {
     }
   }
 
-  const handleNonTargetPrizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handler for default prize value change
+  const handleDefaultPrizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value)
     if (!isNaN(value) && value >= 0) {
-      setNonTargetPrize(value)
+      setDefaultPrize(value)
     }
   }
 
-  const handleTargetPrizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value)
-    if (!isNaN(value) && value >= 0) {
-      setTargetPrize(value)
-    }
-  }
-
-  // Remove the toggleRemoveHitSlots function as we've removed that feature
-
-  const runSimulation = () => {
-    // Validate that target slot is valid
-    if (!validateTargetSlot(targetSlot, slots)) {
-      return;
+  // Handler for adding a new prize configuration
+  const addPrizeConfig = () => {
+    if (newPrizeName.trim() === '') {
+      alert('Please enter a prize name')
+      return
     }
     
-    let attempt = 1
-    let currentSpinResult: number
+    if (newPrizeSlots <= 0) {
+      alert('Prize slots must be greater than 0')
+      return
+    }
+    
+    if (newPrizeValue <= 0) {
+      alert('Prize value must be greater than 0')
+      return
+    }
+    
+    // Check if there are enough remaining slots
+    const usedSlots = prizeConfigs.reduce((total, prize) => total + prize.slots, 0)
+    if (usedSlots + newPrizeSlots > totalSlots) {
+      alert(`Cannot add ${newPrizeSlots} slots. Only ${totalSlots - usedSlots} slots available.`)
+      return
+    }
+    
+    // Add new prize configuration
+    const newPrize: PrizeConfig = {
+      id: `prize${prizeConfigs.length + 1}`,
+      name: newPrizeName,
+      value: newPrizeValue,
+      slots: newPrizeSlots
+    }
+    
+    setPrizeConfigs([...prizeConfigs, newPrize])
+    
+    // Reset inputs
+    setNewPrizeName('')
+    setNewPrizeValue(20)
+    setNewPrizeSlots(1)
+  }
+
+  // Handler for removing a prize configuration
+  const removePrizeConfig = (id: string) => {
+    setPrizeConfigs(prizeConfigs.filter(prize => prize.id !== id))
+  }
+  
+  // Determine which prize was hit based on slot number
+  const determinePrizeHit = (slotNumber: number): { prize: number, prizeType: string } => {
+    let slotCounter = 0
+    
+    // Check if the slot hit any of the special prize configurations
+    for (const prizeConfig of prizeConfigs) {
+      const startSlot = slotCounter + 1
+      const endSlot = slotCounter + prizeConfig.slots
+      
+      if (slotNumber >= startSlot && slotNumber <= endSlot) {
+        return { 
+          prize: prizeConfig.value,
+          prizeType: prizeConfig.name
+        }
+      }
+      
+      slotCounter += prizeConfig.slots
+    }
+    
+    // If no special prize was hit, return the default prize
+    return { 
+      prize: defaultPrize,
+      prizeType: 'Default Prize'
+    }
+  }
+  
+  // Single Spin Function
+  const singleSpin = () => {
+    // Random selection from all slots
+    const currentSpinResult = Math.floor(Math.random() * totalSlots) + 1
+    
+    // Determine prize based on slot hit
+    const { prize, prizeType } = determinePrizeHit(currentSpinResult)
+    const profit = prize - costPerSpin
+    
+    // Create history entry
+    const attempt = spinHistory.length + 1
+    const historyEntry: SpinResult = {
+      attempt,
+      result: currentSpinResult,
+      cost: costPerSpin,
+      prize,
+      profit,
+      prizeType
+    }
+    
+    // Update spin history
+    setSpinHistory(prevHistory => [...prevHistory, historyEntry])
+    
+    // Update house stats
+    setHouseStats(prev => {
+      // Update prize distribution count
+      const updatedDistribution = { ...prev.prizeDistribution }
+      updatedDistribution[prizeType] = (updatedDistribution[prizeType] || 0) + 1
+      
+      return {
+        totalEarnings: prev.totalEarnings + costPerSpin - prize,
+        totalSpins: prev.totalSpins + 1,
+        prizeDistribution: updatedDistribution
+      }
+    })
+    
+    // Set simulation results based on the latest spin
+    setSimulationStats({
+      targetHitAttempt: attempt,
+      totalCost: costPerSpin,
+      finalSpinResult: currentSpinResult,
+      finalPrize: prize,
+      finalProfit: profit,
+      finalPrizeType: prizeType
+    })
+  }
+  
+  // Spin Multiple Times Function
+  const spinMultipleTimes = (spins: number = 10) => {
     let totalCost = 0
+    let currentSpinResult: number
     let history: SpinResult[] = []
     
-    // Continue spinning until we hit the target slot
-    do {
-      // Standard mode - random selection from all slots
-      currentSpinResult = Math.floor(Math.random() * slots) + 1
+    for (let attempt = 1; attempt <= spins; attempt++) {
+      // Random selection from all slots
+      currentSpinResult = Math.floor(Math.random() * totalSlots) + 1
       totalCost += costPerSpin
       
-      const isTargetHit = currentSpinResult === targetSlot
-      const prize = isTargetHit ? targetPrize : nonTargetPrize
+      // Determine prize based on slot hit
+      const { prize, prizeType } = determinePrizeHit(currentSpinResult)
       const profit = prize - costPerSpin
       
       // Add to history
       history.push({
-        attempt,
+        attempt: spinHistory.length + attempt,
         result: currentSpinResult,
         cost: costPerSpin,
         prize,
-        profit
+        profit,
+        prizeType
       })
       
       // Update house stats
-      if (isTargetHit) {
-        setHouseStats(prev => ({
-          ...prev,
+      setHouseStats(prev => {
+        // Update prize distribution count
+        const updatedDistribution = { ...prev.prizeDistribution }
+        updatedDistribution[prizeType] = (updatedDistribution[prizeType] || 0) + 1
+        
+        return {
           totalEarnings: prev.totalEarnings + costPerSpin - prize,
           totalSpins: prev.totalSpins + 1,
-          targetPrizes: prev.targetPrizes + 1
-        }))
-      } else {
-        setHouseStats(prev => ({
-          ...prev,
-          totalEarnings: prev.totalEarnings + costPerSpin - prize,
-          totalSpins: prev.totalSpins + 1,
-          nonTargetPrizes: prev.nonTargetPrizes + 1
-        }))
-      }
-      
-      attempt++
-    } while (currentSpinResult !== targetSlot)
+          prizeDistribution: updatedDistribution
+        }
+      })
+    }
+    
+    // Update results for the last spin
+    const lastSpin = history[history.length - 1]
     
     // Set simulation results
     setSimulationStats({
-      targetHitAttempt: attempt - 1,
+      targetHitAttempt: lastSpin.attempt,
       totalCost,
-      finalSpinResult: currentSpinResult,
-      finalPrize: targetPrize,
-      finalProfit: targetPrize - totalCost
+      finalSpinResult: lastSpin.result,
+      finalPrize: lastSpin.prize,
+      finalProfit: lastSpin.prize - totalCost,
+      finalPrizeType: lastSpin.prizeType
     })
     
     // Update spin history
@@ -169,62 +277,7 @@ export default function Home() {
     setHouseStats({
       totalEarnings: 0,
       totalSpins: 0,
-      nonTargetPrizes: 0,
-      targetPrizes: 0
-    })
-  }
-  
-  // Single Spin Function
-  const singleSpin = () => {
-    // Validate that target slot is valid
-    if (!validateTargetSlot(targetSlot, slots)) {
-      return;
-    }
-    
-    // Random selection from all slots
-    const currentSpinResult = Math.floor(Math.random() * slots) + 1
-    
-    const isTargetHit = currentSpinResult === targetSlot
-    const prize = isTargetHit ? targetPrize : nonTargetPrize
-    const profit = prize - costPerSpin
-    
-    // Create history entry
-    const attempt = spinHistory.length + 1
-    const historyEntry: SpinResult = {
-      attempt,
-      result: currentSpinResult,
-      cost: costPerSpin,
-      prize,
-      profit
-    }
-    
-    // Update spin history
-    setSpinHistory(prevHistory => [...prevHistory, historyEntry])
-    
-    // Update house stats
-    if (isTargetHit) {
-      setHouseStats(prev => ({
-        ...prev,
-        totalEarnings: prev.totalEarnings + costPerSpin - prize,
-        totalSpins: prev.totalSpins + 1,
-        targetPrizes: prev.targetPrizes + 1
-      }))
-    } else {
-      setHouseStats(prev => ({
-        ...prev,
-        totalEarnings: prev.totalEarnings + costPerSpin - prize,
-        totalSpins: prev.totalSpins + 1,
-        nonTargetPrizes: prev.nonTargetPrizes + 1
-      }))
-    }
-    
-    // Set simulation results based on the latest spin
-    setSimulationStats({
-      targetHitAttempt: attempt,
-      totalCost: costPerSpin,
-      finalSpinResult: currentSpinResult,
-      finalPrize: prize,
-      finalProfit: profit
+      prizeDistribution: {}
     })
   }
 
@@ -240,34 +293,17 @@ export default function Home() {
           <div className="card-content">
             <div className="space-y-4">
               <div className="form-group">
-                <label htmlFor="slots">Number of Slots</label>
+                <label htmlFor="totalSlots">Total Number of Slots</label>
                 <input
-                  id="slots"
+                  id="totalSlots"
                   type="number"
                   min="2"
-                  value={slots}
-                  onChange={handleSlotsChange}
+                  value={totalSlots}
+                  onChange={handleTotalSlotsChange}
                 />
                 <p className="text-hint">Total slots on the wheel</p>
               </div>
-
-              <div className="form-group">
-                <label htmlFor="targetSlot">Target Slot</label>
-                <input
-                  id="targetSlot"
-                  type="number"
-                  min="1"
-                  max={slots}
-                  value={targetSlot}
-                  onChange={handleTargetSlotChange}
-                  className={targetSlotError ? "input-error" : ""}
-                />
-                {targetSlotError && (
-                  <p className="text-error">{targetSlotError}</p>
-                )}
-                <p className="text-hint">The slot you're betting on</p>
-              </div>
-
+              
               <div className="form-group">
                 <label htmlFor="costPerSpin">Cost per Spin</label>
                 <input
@@ -279,34 +315,92 @@ export default function Home() {
                 />
                 <p className="text-hint">Current: {formatCurrency(costPerSpin)}</p>
               </div>
-
+              
               <div className="form-group">
-                <label htmlFor="nonTargetPrize">Non-Target Prize</label>
+                <label htmlFor="defaultPrize">Default Prize</label>
                 <input
-                  id="nonTargetPrize"
+                  id="defaultPrize"
                   type="number"
                   min="0"
-                  value={nonTargetPrize}
-                  onChange={handleNonTargetPrizeChange}
+                  value={defaultPrize}
+                  onChange={handleDefaultPrizeChange}
                 />
-                <p className="text-hint">Current: {formatCurrency(nonTargetPrize)}</p>
+                <p className="text-hint">Current: {formatCurrency(defaultPrize)}</p>
+                <p className="text-hint">For {remainingSlots} default slots</p>
               </div>
-
+              
+              <div className="divider"></div>
+              
+              <h3 className="subsection-heading">Special Prizes</h3>
+              
+              {prizeConfigs.map((prize, index) => (
+                <div key={prize.id} className="prize-config-item">
+                  <div className="prize-config-details">
+                    <span className="prize-name">{prize.name}</span>
+                    <span className="prize-value">{formatCurrency(prize.value)}</span>
+                    <span className="prize-slots">{prize.slots} slot{prize.slots !== 1 ? 's' : ''}</span>
+                  </div>
+                  <button 
+                    className="button-small button-danger"
+                    onClick={() => removePrizeConfig(prize.id)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              
+              <div className="divider"></div>
+              
+              <h3 className="subsection-heading">Add New Prize</h3>
+              
               <div className="form-group">
-                <label htmlFor="targetPrize">Target Prize</label>
+                <label htmlFor="newPrizeName">Prize Name</label>
                 <input
-                  id="targetPrize"
-                  type="number"
-                  min="0"
-                  value={targetPrize}
-                  onChange={handleTargetPrizeChange}
+                  id="newPrizeName"
+                  type="text"
+                  value={newPrizeName}
+                  onChange={(e) => setNewPrizeName(e.target.value)}
+                  placeholder="e.g., Jackpot"
                 />
-                <p className="text-hint">Current: {formatCurrency(targetPrize)}</p>
               </div>
+              
+              <div className="form-group">
+                <label htmlFor="newPrizeValue">Prize Value</label>
+                <input
+                  id="newPrizeValue"
+                  type="number"
+                  min="1"
+                  value={newPrizeValue}
+                  onChange={(e) => setNewPrizeValue(parseInt(e.target.value) || 0)}
+                />
+                <p className="text-hint">{formatCurrency(newPrizeValue)}</p>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="newPrizeSlots">Number of Slots</label>
+                <input
+                  id="newPrizeSlots"
+                  type="number"
+                  min="1"
+                  max={totalSlots - prizeConfigs.reduce((total, prize) => total + prize.slots, 0)}
+                  value={newPrizeSlots}
+                  onChange={(e) => setNewPrizeSlots(parseInt(e.target.value) || 1)}
+                />
+              </div>
+              
+              <button 
+                onClick={addPrizeConfig}
+                disabled={totalSlots - prizeConfigs.reduce((total, prize) => total + prize.slots, 0) < newPrizeSlots}
+                className="button-full"
+              >
+                Add Prize Configuration
+              </button>
             </div>
             
+            <div className="divider"></div>
+            
             <div className="button-group">
-              <button onClick={runSimulation}>Spin Until Target Hit</button>
+              <button onClick={() => spinMultipleTimes(10)}>Spin 10 Times</button>
               <button onClick={singleSpin}>Single Spin</button>
               <button className="button-outline" onClick={clearHistory}>Clear History</button>
             </div>
@@ -335,20 +429,23 @@ export default function Home() {
                   <span className="stat-value">{houseStats.totalSpins}</span>
                 </div>
               </div>
-              
-              <div className="stat-card">
-                <div className="stat-content">
-                  <span className="stat-label">Non-Target Prizes</span>
-                  <span className="stat-value">{houseStats.nonTargetPrizes}</span>
+            </div>
+            
+            <div className="divider"></div>
+            
+            <h3 className="subsection-heading">Prize Distribution</h3>
+            
+            <div className="prize-distribution">
+              {Object.entries(houseStats.prizeDistribution).map(([prizeType, count]) => (
+                <div key={prizeType} className="prize-distribution-item">
+                  <span className="prize-type">{prizeType}</span>
+                  <span className="prize-count">{count} hit{count !== 1 ? 's' : ''}</span>
                 </div>
-              </div>
+              ))}
               
-              <div className="stat-card">
-                <div className="stat-content">
-                  <span className="stat-label">Target Prizes</span>
-                  <span className="stat-value">{houseStats.targetPrizes}</span>
-                </div>
-              </div>
+              {Object.keys(houseStats.prizeDistribution).length === 0 && (
+                <p className="text-center">No spins recorded yet</p>
+              )}
             </div>
           </div>
         </div>
@@ -379,6 +476,13 @@ export default function Home() {
                 <div className="result-content">
                   <span className="result-label">Last Spin Result</span>
                   <span className="result-value">Slot {simulationStats.finalSpinResult}</span>
+                </div>
+              </div>
+              
+              <div className="result-card">
+                <div className="result-content">
+                  <span className="result-label">Prize Type</span>
+                  <span className="result-value">{simulationStats.finalPrizeType}</span>
                 </div>
               </div>
               
@@ -421,6 +525,7 @@ export default function Home() {
                   <tr>
                     <th>Attempt</th>
                     <th>Spin Result</th>
+                    <th>Prize Type</th>
                     <th>Cost</th>
                     <th>Prize</th>
                     <th>Profit/Loss</th>
@@ -431,6 +536,7 @@ export default function Home() {
                     <tr key={index}>
                       <td>{spin.attempt}</td>
                       <td>Slot {spin.result}</td>
+                      <td>{spin.prizeType}</td>
                       <td>{formatCurrency(spin.cost)}</td>
                       <td>{formatCurrency(spin.prize)}</td>
                       <td className={spin.profit >= 0 ? 'profit' : 'loss'}>
