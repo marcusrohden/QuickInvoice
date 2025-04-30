@@ -280,7 +280,8 @@ export default function Home() {
         
         // Determine prize based on slot hit
         const hitResult = determinePrizeHit(currentSpinResult);
-        const profit = hitResult.prize - costPerSpin;
+        // Calculate profit from house perspective (price received minus prize paid)
+        const profit = costPerSpin - hitResult.prize;
         
         // Add to history (but limit the entries we keep for performance)
         // For the final break or if we're only doing a few breaks, keep all spins
@@ -327,7 +328,7 @@ export default function Home() {
           result: 0,
           cost: totalCost,
           prize: 0,
-          profit: -totalCost,
+          profit: totalCost, // House perspective: price - prize (all price, no prizes)
           prizeType: 'Unknown'
         };
     
@@ -340,7 +341,7 @@ export default function Home() {
       totalCost,
       finalSpinResult: lastResult.result,
       finalPrize: lastResult.prize,
-      finalProfit: lastResult.prize - totalCost,
+      finalProfit: totalCost - (lastResult.prize * totalPrizesRemoved), // House profit
       finalPrizeType: `Completed ${breakCount} breaks (${totalPrizesRemoved} prizes hit)`
     });
     
@@ -369,7 +370,8 @@ export default function Home() {
     
     // Determine prize based on slot hit
     const { prize, prizeType } = determinePrizeHit(currentSpinResult)
-    const profit = prize - costPerSpin
+    // Calculate profit from house perspective (price received minus prize paid)
+    const profit = costPerSpin - prize
     
     // Create history entry
     const attempt = spinHistory.length + 1
@@ -430,7 +432,8 @@ export default function Home() {
       
       // Determine prize based on slot hit
       const { prize, prizeType } = determinePrizeHit(currentSpinResult)
-      const profit = prize - costPerSpin
+      // Calculate profit from house perspective (price received minus prize paid)
+      const profit = costPerSpin - prize
       
       // Add to history (but limit to last 100 spins for memory/performance)
       if (spins <= 100 || attempt > spins - 100) {
@@ -458,17 +461,17 @@ export default function Home() {
           result: currentSpinResult!,
           cost: costPerSpin,
           prize: 0,
-          profit: -costPerSpin,
+          profit: costPerSpin, // House perspective, profit is positive
           prizeType: 'Unknown'
         }
     
-    // Set simulation results
+    // Set simulation results from house perspective
     setSimulationStats({
       targetHitAttempt: lastAttemptNum,
       totalCost,
       finalSpinResult: lastResult.result,
       finalPrize: lastResult.prize,
-      finalProfit: lastResult.prize - totalCost,
+      finalProfit: totalCost - (lastResult.prize * spins), // House profit (total price - total prizes)
       finalPrizeType: lastResult.prizeType
     })
     
