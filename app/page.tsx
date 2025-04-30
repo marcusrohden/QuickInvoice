@@ -935,6 +935,43 @@ export default function Home() {
                     </span>
                   </div>
                 </div>
+                
+                {/* Only show best/worst break stats in removeHitSlots mode */}
+                {simulationMode === 'removeHitSlots' && (
+                  <>
+                    <div className="stat-card">
+                      <div className="stat-content">
+                        <span className="stat-label">Best Break</span>
+                        <span className="stat-value profit">
+                          {houseStats.bestBreak?.spins ? 
+                            `${formatCurrency(houseStats.bestBreak.profit)} / ${houseStats.bestBreak.spins} spins` : 
+                            'N/A'}
+                        </span>
+                        <span className="stat-sublabel">
+                          {houseStats.bestBreak?.spins ? 
+                            `${formatCurrency(houseStats.bestBreak.profit / houseStats.bestBreak.spins)}/spin` : 
+                            ''}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="stat-card">
+                      <div className="stat-content">
+                        <span className="stat-label">Worst Break</span>
+                        <span className="stat-value loss">
+                          {houseStats.worstBreak?.spins ? 
+                            `${formatCurrency(houseStats.worstBreak.profit)} / ${houseStats.worstBreak.spins} spins` : 
+                            'N/A'}
+                        </span>
+                        <span className="stat-sublabel">
+                          {houseStats.worstBreak?.spins ? 
+                            `${formatCurrency(houseStats.worstBreak.profit / houseStats.worstBreak.spins)}/spin` : 
+                            ''}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

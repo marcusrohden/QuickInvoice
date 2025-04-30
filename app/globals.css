@@ -348,6 +348,13 @@ tr:last-child td {
   font-weight: 600;
 }
 
+.stat-sublabel {
+  font-size: 0.75rem;
+  color: var(--muted);
+  display: block;
+  margin-top: 0.25rem;
+}
+
 .stat-hint {
   font-size: 0.75rem;
   color: var(--muted);
