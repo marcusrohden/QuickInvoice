@@ -543,7 +543,7 @@ export default function Home() {
               </div>
               
               <div className="form-group">
-                <label htmlFor="costPerSpin">Cost per Spin</label>
+                <label htmlFor="costPerSpin">Price per Spin</label>
                 <input
                   id="costPerSpin"
                   type="number"
@@ -825,7 +825,7 @@ export default function Home() {
               
               <div className="result-card">
                 <div className="result-content">
-                  <span className="result-label">Total Cost</span>
+                  <span className="result-label">Total Price</span>
                   <span className="result-value">{formatCurrency(simulationStats.totalCost)}</span>
                 </div>
               </div>
@@ -884,7 +884,7 @@ export default function Home() {
                     <th>Attempt</th>
                     <th>Spin Result</th>
                     <th>Prize Type</th>
-                    <th>Cost</th>
+                    <th>Price</th>
                     <th>Prize</th>
                     <th>Profit/Loss</th>
                   </tr>
