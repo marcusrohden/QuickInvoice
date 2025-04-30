@@ -35,22 +35,28 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
-        <div className="mr-4 flex">
+        <div className="mr-6 flex">
           <Link href="/" className="flex items-center">
-            <span className="font-bold text-lg">Roulette Simulator</span>
+            <span className="font-bold text-xl bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Roulette Simulator</span>
           </Link>
         </div>
         
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <nav className="flex items-center space-x-6 ml-6">
-            <Link href="/" className="text-sm font-medium transition-colors hover:text-foreground/80">
-              Simulator
+          <nav className="flex items-center space-x-1 ml-6">
+            <Link href="/" passHref>
+              <Button variant="ghost" className="font-medium">
+                Simulator
+              </Button>
             </Link>
-            <Link href="/pricing" className="text-sm font-medium transition-colors hover:text-foreground/80">
-              Pricing
+            <Link href="/pricing" passHref>
+              <Button variant="ghost" className="font-medium">
+                Pricing
+              </Button>
             </Link>
-            <Link href="/blog" className="text-sm font-medium transition-colors hover:text-foreground/80">
-              Blog
+            <Link href="/blog" passHref>
+              <Button variant="ghost" className="font-medium">
+                Blog
+              </Button>
             </Link>
           </nav>
           
