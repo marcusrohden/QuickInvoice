@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { 
@@ -21,6 +21,7 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   // After mounting, we can safely show the theme toggle
   useEffect(() => {
@@ -35,30 +36,47 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
-        <div className="mr-6 flex">
-          <Link href="/" className="flex items-center">
-            <span className="font-bold text-xl bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Roulette Simulator</span>
+        <div className="flex items-center">
+          <Link href="/" className="text-2xl font-bold tracking-tight mr-8">
+            roulspy
           </Link>
-        </div>
-        
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <nav className="flex items-center space-x-1 ml-6">
-            <Link href="/" passHref>
-              <Button variant="ghost" className="font-medium">
-                Simulator
-              </Button>
+          <nav className="flex items-center">
+            <Link 
+              href="/" 
+              className={`px-5 py-4 text-sm font-medium hover:text-primary ${
+                pathname === '/' ? 'text-primary border-b-2 border-primary' : 'text-foreground/80 border-b-2 border-transparent'
+              }`}
+            >
+              Home
             </Link>
-            <Link href="/pricing" passHref>
-              <Button variant="ghost" className="font-medium">
-                Pricing
-              </Button>
+            <Link 
+              href="/configurations" 
+              className={`px-5 py-4 text-sm font-medium hover:text-primary ${
+                pathname === '/configurations' ? 'text-primary border-b-2 border-primary' : 'text-foreground/80 border-b-2 border-transparent'
+              }`}
+            >
+              Configurations
             </Link>
-            <Link href="/blog" passHref>
-              <Button variant="ghost" className="font-medium">
-                Blog
-              </Button>
+            <Link 
+              href="/pricing" 
+              className={`px-5 py-4 text-sm font-medium hover:text-primary ${
+                pathname === '/pricing' ? 'text-primary border-b-2 border-primary' : 'text-foreground/80 border-b-2 border-transparent'
+              }`}
+            >
+              Pricing
+            </Link>
+            <Link 
+              href="/blog" 
+              className={`px-5 py-4 text-sm font-medium hover:text-primary ${
+                pathname === '/blog' ? 'text-primary border-b-2 border-primary' : 'text-foreground/80 border-b-2 border-transparent'
+              }`}
+            >
+              Blog
             </Link>
           </nav>
+        </div>
+        
+        <div className="flex flex-1 items-center justify-end space-x-2">
           
           <div className="flex items-center space-x-2">
             {mounted && (
