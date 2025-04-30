@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { formatCurrency } from '@/lib/utils'
 import { Header } from '@/components/Header'
 import { SaveConfigurationForm } from '@/components/SaveConfigurationForm'
+import { useSearchParams } from 'next/navigation'
 
 // Define types
 interface SpinResult {
@@ -38,6 +39,9 @@ interface PrizeConfig {
 }
 
 export default function Home() {
+  // Get search params to check if we're loading a configuration
+  const searchParams = useSearchParams();
+  
   // Game parameters state
   const [totalSlots, setTotalSlots] = useState(25)
   const [costPerSpin, setCostPerSpin] = useState(25)
@@ -78,7 +82,63 @@ export default function Home() {
     totalSpins: 0,
     prizeDistribution: {} // Initialize empty object for prize distribution counts
   })
+  
+  // State to track loading status
+  const [isLoading, setIsLoading] = useState(false)
 
+  // Load configuration if configId is in the URL
+  useEffect(() => {
+    const configId = searchParams.get('config');
+    if (configId) {
+      loadConfiguration(parseInt(configId));
+    }
+  }, [searchParams]);
+  
+  // Function to load configuration from API
+  const loadConfiguration = async (id: number) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/configurations/${id}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to load configuration');
+      }
+      
+      const config = await response.json();
+      
+      // Update state with loaded configuration
+      setTotalSlots(config.totalSlots);
+      setCostPerSpin(config.pricePerSpin);
+      setDefaultPrize(config.defaultPrize);
+      
+      // Convert prize configs to our format
+      if (config.prizeConfigs && Array.isArray(config.prizeConfigs)) {
+        setPrizeConfigs(config.prizeConfigs.map((prize: any, index: number) => ({
+          id: `prize${index + 1}`,
+          name: prize.name || `Prize ${index + 1}`,
+          value: prize.value || 0,
+          slots: prize.slots || 0
+        })));
+      }
+      
+      // Reset simulation data
+      setHitSlots([]);
+      setSpinHistory([]);
+      setSimulationStats(null);
+      setHouseStats({
+        totalEarnings: 0,
+        totalSpins: 0,
+        prizeDistribution: {}
+      });
+      
+    } catch (error) {
+      console.error('Error loading configuration:', error);
+      alert('Failed to load configuration. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   // Calculate remaining slots whenever prize configurations change
   useEffect(() => {
     const usedSlots = prizeConfigs.reduce((total, prize) => total + prize.slots, 0)
@@ -515,6 +575,12 @@ export default function Home() {
   return (
     <div>
       <Header />
+      
+      {isLoading && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      )}
       
       <main>
         <h1 className="main-heading">Roulette Simulator</h1>
