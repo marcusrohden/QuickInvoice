@@ -798,16 +798,47 @@ export default function Home() {
             
             <h3 className="subsection-heading">Prize Distribution</h3>
             
-            <div className="prize-distribution">
-              {Object.entries(houseStats.prizeDistribution).map(([prizeType, count]) => (
-                <div key={prizeType} className="prize-distribution-item">
-                  <span className="prize-type">{prizeType}</span>
-                  <span className="prize-count">{count} hit{count !== 1 ? 's' : ''}</span>
-                </div>
-              ))}
-              
-              {Object.keys(houseStats.prizeDistribution).length === 0 && (
+            <div className="prize-distribution-table-container">
+              {Object.keys(houseStats.prizeDistribution).length === 0 ? (
                 <p className="text-center">No spins recorded yet</p>
+              ) : (
+                <table className="prize-distribution-table">
+                  <thead>
+                    <tr>
+                      <th>Prize Type</th>
+                      <th>Hits</th>
+                      <th>Cost of Prizes</th>
+                      <th>Paid in Spins</th>
+                      <th>Profit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(houseStats.prizeDistribution).map(([prizeType, count]) => {
+                      // Determine prize value from the prize type
+                      let prizeValue = defaultPrize; // Default value
+                      
+                      // Match against special prizes
+                      const matchingPrize = prizeConfigs.find(p => p.name === prizeType);
+                      if (matchingPrize) {
+                        prizeValue = matchingPrize.value;
+                      }
+                      
+                      const costOfPrizes = count * prizeValue;
+                      const paidInSpins = count * costPerSpin;
+                      const profit = paidInSpins - costOfPrizes;
+                      
+                      return (
+                        <tr key={prizeType}>
+                          <td>{prizeType}</td>
+                          <td>{count} hit{count !== 1 ? 's' : ''}</td>
+                          <td className="text-right">{formatCurrency(costOfPrizes)}</td>
+                          <td className="text-right">{formatCurrency(paidInSpins)}</td>
+                          <td className={`text-right ${profit >= 0 ? 'profit' : 'loss'}`}>{formatCurrency(profit)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               )}
             </div>
           </div>

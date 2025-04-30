@@ -569,3 +569,34 @@ tr:last-child td {
 .hit-slots-status {
   margin-top: 1rem;
 }
+
+/* Prize Distribution Table */
+.prize-distribution-table-container {
+  overflow-x: auto;
+}
+
+.prize-distribution-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.prize-distribution-table th,
+.prize-distribution-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.prize-distribution-table th {
+  font-weight: 600;
+  background-color: #f8fafc;
+}
+
+.prize-distribution-table td.text-right {
+  text-align: right;
+}
+
+.prize-distribution-table tr:hover {
+  background-color: #f8fafc;
+}

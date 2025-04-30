@@ -573,6 +573,37 @@ tr:last-child td {
   margin-top: 1rem;
 }
 
+/* Prize Distribution Table */
+.prize-distribution-table-container {
+  overflow-x: auto;
+}
+
+.prize-distribution-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.prize-distribution-table th,
+.prize-distribution-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.prize-distribution-table th {
+  font-weight: 600;
+  background-color: #f8fafc;
+}
+
+.prize-distribution-table td.text-right {
+  text-align: right;
+}
+
+.prize-distribution-table tr:hover {
+  background-color: #f8fafc;
+}
+
 /*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[13].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[13].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"app/layout.tsx","import":"Inter","arguments":[{"subsets":["latin"]}],"variableName":"inter"} ***!
   \****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
