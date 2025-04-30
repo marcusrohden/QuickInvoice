@@ -42,7 +42,7 @@ interface HouseStatsType {
 interface PrizeConfig {
   id: string
   name: string
-  value: number
+  unitCost: number // renamed from value to be more descriptive
   slots: number
 }
 
@@ -55,10 +55,10 @@ export default function Home() {
   const [costPerSpin, setCostPerSpin] = useState(25)
   const [defaultPrize, setDefaultPrize] = useState(10)
   
-  // Prize configurations with their quantity and value
+  // Prize configurations with their quantity and unit cost
   const [prizeConfigs, setPrizeConfigs] = useState<PrizeConfig[]>([
-    { id: "prize1", name: "Prize X", value: 50, slots: 1 },
-    { id: "prize2", name: "Prize Z", value: 30, slots: 3 }
+    { id: "prize1", name: "Prize X", unitCost: 50, slots: 1 },
+    { id: "prize2", name: "Prize Z", unitCost: 30, slots: 3 }
   ])
   
   // Calculate remaining slots after special prizes
@@ -225,7 +225,7 @@ export default function Home() {
     const newPrize: PrizeConfig = {
       id: `prize${prizeConfigs.length + 1}`,
       name: newPrizeName,
-      value: newPrizeValue,
+      unitCost: newPrizeValue,
       slots: newPrizeSlots
     }
     
@@ -263,7 +263,7 @@ export default function Home() {
       
       if (slotNumber >= startSlot && slotNumber <= endSlot) {
         return { 
-          prize: prizeConfig.value,
+          prize: prizeConfig.unitCost,
           prizeType: prizeConfig.name,
           prizeIndex: i,
           isSpecialPrize: true,
@@ -746,7 +746,7 @@ export default function Home() {
                       <tr>
                         <th>Item</th>
                         <th>Quantity</th>
-                        <th>Value</th>
+                        <th>Unit Cost</th>
                         <th>Total</th>
                         <th></th>
                       </tr>
@@ -756,8 +756,8 @@ export default function Home() {
                         <tr key={prize.id}>
                           <td>{prize.name}</td>
                           <td>{prize.slots} slot{prize.slots !== 1 ? 's' : ''}</td>
-                          <td>{formatCurrency(prize.value)}</td>
-                          <td>{formatCurrency(prize.value * prize.slots)}</td>
+                          <td>{formatCurrency(prize.unitCost)}</td>
+                          <td>{formatCurrency(prize.unitCost * prize.slots)}</td>
                           <td>
                             <button 
                               className="button-small button-danger"
@@ -805,7 +805,7 @@ export default function Home() {
                         </div>
                         
                         <div className="form-group">
-                          <label htmlFor="newPrizeValue">Prize Value</label>
+                          <label htmlFor="newPrizeValue">Prize Unit Cost</label>
                           <input
                             id="newPrizeValue"
                             type="number"
