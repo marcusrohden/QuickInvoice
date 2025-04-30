@@ -10,14 +10,15 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user?.id) {
+    if (!session || !session.user) {
       return NextResponse.json(
         { error: "You must be logged in to access configurations" },
         { status: 401 }
       );
     }
 
-    const userId = parseInt(session.user.id);
+    // Cast to any because NextAuth types don't include id by default
+    const userId = parseInt((session.user as any).id);
     
     const userConfigs = await db
       .select()
@@ -39,14 +40,15 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user?.id) {
+    if (!session || !session.user) {
       return NextResponse.json(
         { error: "You must be logged in to create configurations" },
         { status: 401 }
       );
     }
 
-    const userId = parseInt(session.user.id);
+    // Cast to any because NextAuth types don't include id by default
+    const userId = parseInt((session.user as any).id);
     const body = await request.json();
     
     // Validate required fields

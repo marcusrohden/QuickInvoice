@@ -37,14 +37,14 @@ export async function GET(
 
     // Check if user has access to this configuration
     if (!config.isPublic) {
-      if (!session || !session.user?.id) {
+      if (!session || !session.user) {
         return NextResponse.json(
           { error: "You must be logged in to access this configuration" },
           { status: 401 }
         );
       }
 
-      const userId = parseInt(session.user.id);
+      const userId = parseInt((session.user as any).id);
       
       if (config.userId !== userId) {
         return NextResponse.json(
@@ -81,14 +81,14 @@ export async function PUT(
 
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user?.id) {
+    if (!session || !session.user) {
       return NextResponse.json(
         { error: "You must be logged in to update configurations" },
         { status: 401 }
       );
     }
 
-    const userId = parseInt(session.user.id);
+    const userId = parseInt((session.user as any).id);
     
     // Check if configuration exists and belongs to the user
     const [existingConfig] = await db
@@ -152,14 +152,14 @@ export async function DELETE(
 
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user?.id) {
+    if (!session || !session.user) {
       return NextResponse.json(
         { error: "You must be logged in to delete configurations" },
         { status: 401 }
       );
     }
 
-    const userId = parseInt(session.user.id);
+    const userId = parseInt((session.user as any).id);
     
     // Check if configuration exists and belongs to the user
     const [existingConfig] = await db
