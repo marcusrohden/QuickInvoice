@@ -258,9 +258,10 @@ export default function Home() {
       let breakHitSlots: number[] = [];
       let remainingPrizeSlots = totalPrizeSlots;
       let breakSpinCount = 0;
+      let remainingSlotsToHit = totalSlots; // All slots need to be hit in a break
       
       // Continue until all prize slots are hit in this break
-      while (remainingPrizeSlots > 0) {
+      while (remainingPrizeSlots > 0 && breakHitSlots.length < totalSlots) {
         breakSpinCount++;
         
         // Get a valid slot (not already hit in this break cycle)
@@ -305,10 +306,11 @@ export default function Home() {
         housePrizeDistribution[hitResult.prizeType] = (housePrizeDistribution[hitResult.prizeType] || 0) + 1;
         houseEarnings += costPerSpin - hitResult.prize;
         
-        // If we hit a special prize (not default), mark it as hit
+        // Track this slot as hit in this break
+        breakHitSlots.push(currentSpinResult);
+        
+        // If we hit a special prize (not default), track it separately
         if (hitResult.isSpecialPrize) {
-          // Track this slot as hit in this break
-          breakHitSlots.push(currentSpinResult);
           remainingPrizeSlots--;
           totalPrizesRemoved++;
         }
@@ -743,7 +745,7 @@ export default function Home() {
                 </div>
                 
                 <p className="text-hint mt-2">
-                  In this mode, each "break" is a complete cycle where all prize slots are hit. Running multiple breaks repeats this process the specified number of times.
+                  In this mode, each "break" is a complete cycle where all slots are removed after being hit. The break completes when all special prize slots (non-default) are hit. Running multiple breaks repeats this process the specified number of times.
                 </p>
               </div>
             )}
