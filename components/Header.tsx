@@ -35,15 +35,15 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center">
+      <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
         <div className="flex items-center">
-          <Link href="/" className="text-2xl font-bold tracking-tight mr-8">
+          <Link href="/" className="text-2xl font-bold tracking-tight mr-12">
             roulspy
           </Link>
-          <nav className="flex items-center">
+          <nav className="flex items-center space-x-8">
             <Link 
               href="/" 
-              className={`px-5 py-4 text-sm font-medium hover:text-primary ${
+              className={`px-3 py-4 text-sm font-medium hover:text-primary ${
                 pathname === '/' ? 'text-primary border-b-2 border-primary' : 'text-foreground/80 border-b-2 border-transparent'
               }`}
             >
@@ -51,7 +51,7 @@ export function Header() {
             </Link>
             <Link 
               href="/configurations" 
-              className={`px-5 py-4 text-sm font-medium hover:text-primary ${
+              className={`px-3 py-4 text-sm font-medium hover:text-primary ${
                 pathname === '/configurations' ? 'text-primary border-b-2 border-primary' : 'text-foreground/80 border-b-2 border-transparent'
               }`}
             >
@@ -59,7 +59,7 @@ export function Header() {
             </Link>
             <Link 
               href="/pricing" 
-              className={`px-5 py-4 text-sm font-medium hover:text-primary ${
+              className={`px-3 py-4 text-sm font-medium hover:text-primary ${
                 pathname === '/pricing' ? 'text-primary border-b-2 border-primary' : 'text-foreground/80 border-b-2 border-transparent'
               }`}
             >
@@ -67,7 +67,7 @@ export function Header() {
             </Link>
             <Link 
               href="/blog" 
-              className={`px-5 py-4 text-sm font-medium hover:text-primary ${
+              className={`px-3 py-4 text-sm font-medium hover:text-primary ${
                 pathname === '/blog' ? 'text-primary border-b-2 border-primary' : 'text-foreground/80 border-b-2 border-transparent'
               }`}
             >
@@ -76,15 +76,15 @@ export function Header() {
           </nav>
         </div>
         
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        <div className="flex items-center space-x-4">
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-5">
             {mounted && (
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="mr-2 h-8 w-8 p-0"
+                className="h-9 w-9 p-0"
                 aria-label="Toggle theme"
               >
                 {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -92,14 +92,14 @@ export function Header() {
             )}
             
             {status === 'loading' ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             ) : status === 'authenticated' && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2">
+                  <Button variant="ghost" className="flex items-center gap-2 h-9 px-3">
                     <User className="h-4 w-4" />
-                    <span className="max-w-[150px] truncate">{user.name || user.email || 'Account'}</span>
-                    <ChevronDown className="h-4 w-4" />
+                    <span className="max-w-[150px] truncate font-medium">{user.name || user.email || 'Account'}</span>
+                    <ChevronDown className="h-4 w-4 ml-1" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -116,7 +116,7 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="default" onClick={() => router.push('/auth')}>
+              <Button variant="default" className="h-9 px-4 font-medium" onClick={() => router.push('/auth')}>
                 Sign In
               </Button>
             )}
