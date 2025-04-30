@@ -132,7 +132,7 @@ export default function Home() {
         setPrizeConfigs(config.prizeConfigs.map((prize: any, index: number) => ({
           id: `prize${index + 1}`,
           name: prize.name || `Prize ${index + 1}`,
-          value: prize.value || 0,
+          unitCost: prize.unitCost || prize.value || 0, // support both new and old format
           slots: prize.slots || 0
         })));
       }

@@ -61,7 +61,7 @@ export const accounts = pgTable('accounts', {
 export type PrizeConfigType = {
   id: string;
   name: string;
-  value: number;
+  unitCost: number; // renamed from value to be more descriptive
   slots: number;
 };
 
