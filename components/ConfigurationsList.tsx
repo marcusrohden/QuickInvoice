@@ -204,9 +204,10 @@ export function ConfigurationsList() {
                       <div className="flex justify-end space-x-2">
                         <Button 
                           variant="outline" 
-                          size="icon" 
+                          size="sm"
                           onClick={() => handleLoad(config.id)}
                           title="Load configuration"
+                          className="h-8 w-8 p-0"
                         >
                           <span className="sr-only">Load</span>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -215,28 +216,30 @@ export function ConfigurationsList() {
                         </Button>
                         <Button
                           variant="outline"
-                          size="icon"
+                          size="sm"
                           onClick={() => handleEdit(config.id)}
                           title="Edit configuration"
+                          className="h-8 w-8 p-0"
                         >
                           <span className="sr-only">Edit</span>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
-                          size="icon"
+                          size="sm"
                           onClick={() => handleDuplicate(config.id)}
                           title="Duplicate configuration"
+                          className="h-8 w-8 p-0"
                         >
                           <span className="sr-only">Duplicate</span>
                           <Copy className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
-                          size="icon"
+                          size="sm"
                           onClick={() => handleDelete(config.id)}
                           title="Delete configuration"
-                          className="text-red-500 hover:text-red-600"
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
                         >
                           <span className="sr-only">Delete</span>
                           <Trash2 className="h-4 w-4" />

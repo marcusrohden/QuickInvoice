@@ -58,9 +58,9 @@ export function Header() {
             {mounted && (
               <Button 
                 variant="ghost" 
-                size="icon" 
+                size="sm"
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="mr-2"
+                className="mr-2 h-8 w-8 p-0"
                 aria-label="Toggle theme"
               >
                 {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
