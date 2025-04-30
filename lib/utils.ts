@@ -15,6 +15,7 @@ export interface SpinResult {
   cost: number
   prize: number
   profit: number
+  prizeType: string
 }
 
 export interface SimulationStats {
@@ -23,6 +24,7 @@ export interface SimulationStats {
   finalSpinResult: number
   finalPrize: number
   finalProfit: number
+  finalPrizeType: string
 }
 
 export interface HouseStatsType {
@@ -30,6 +32,15 @@ export interface HouseStatsType {
   totalSpins: number
   nonTargetPrizes: number
   targetPrizes: number
+  prizeDistribution: Record<string, number> // Count of each prize type hit
+  worstBreak?: {
+    spins: number
+    profit: number
+  }
+  bestBreak?: {
+    spins: number
+    profit: number
+  }
 }
 
 export const formatCurrency = (amount: number): string => {
