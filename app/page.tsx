@@ -960,39 +960,58 @@ export default function Home() {
                 
                 {/* Only show best/worst break stats in removeHitSlots mode */}
                 {simulationMode === 'removeHitSlots' && (
-                  <>
-                    <div className="stat-card">
-                      <div className="stat-content">
-                        <span className="stat-label">Best Break</span>
-                        <span className="stat-value profit">
-                          {houseStats.bestBreak?.spins ? 
-                            `${formatCurrency(houseStats.bestBreak.profit)} / ${houseStats.bestBreak.spins} spins` : 
-                            'N/A'}
-                        </span>
-                        <span className="stat-sublabel">
-                          {houseStats.bestBreak?.spins ? 
-                            `${formatCurrency(houseStats.bestBreak.profit / houseStats.bestBreak.spins)}/spin` : 
-                            ''}
-                        </span>
+                  <div className="stat-card" style={{ gridColumn: 'span 2' }}>
+                    <div className="stat-content">
+                      <span className="stat-label">Break Performance</span>
+                      <div className="flex flex-col space-y-4 mt-2">
+                        <div>
+                          <div className="flex justify-between">
+                            <span className="font-medium">Best Break:</span>
+                            <span className="profit">
+                              {houseStats.bestBreak?.spins ? 
+                                `${formatCurrency(houseStats.bestBreak.profit)}` : 
+                                'N/A'}
+                            </span>
+                          </div>
+                          <div className="stat-sublabel flex justify-between">
+                            <span>Spins:</span>
+                            <span>{houseStats.bestBreak?.spins || 'N/A'}</span>
+                          </div>
+                          <div className="stat-sublabel flex justify-between">
+                            <span>Per Spin:</span>
+                            <span className="profit">
+                              {houseStats.bestBreak?.spins ? 
+                                `${formatCurrency(houseStats.bestBreak.profit / houseStats.bestBreak.spins)}` : 
+                                'N/A'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between">
+                            <span className="font-medium">Worst Break:</span>
+                            <span className="loss">
+                              {houseStats.worstBreak?.spins ? 
+                                `${formatCurrency(houseStats.worstBreak.profit)}` : 
+                                'N/A'}
+                            </span>
+                          </div>
+                          <div className="stat-sublabel flex justify-between">
+                            <span>Spins:</span>
+                            <span>{houseStats.worstBreak?.spins || 'N/A'}</span>
+                          </div>
+                          <div className="stat-sublabel flex justify-between">
+                            <span>Per Spin:</span>
+                            <span className="loss">
+                              {houseStats.worstBreak?.spins ? 
+                                `${formatCurrency(houseStats.worstBreak.profit / houseStats.worstBreak.spins)}` : 
+                                'N/A'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    
-                    <div className="stat-card">
-                      <div className="stat-content">
-                        <span className="stat-label">Worst Break</span>
-                        <span className="stat-value loss">
-                          {houseStats.worstBreak?.spins ? 
-                            `${formatCurrency(houseStats.worstBreak.profit)} / ${houseStats.worstBreak.spins} spins` : 
-                            'N/A'}
-                        </span>
-                        <span className="stat-sublabel">
-                          {houseStats.worstBreak?.spins ? 
-                            `${formatCurrency(houseStats.worstBreak.profit / houseStats.worstBreak.spins)}/spin` : 
-                            ''}
-                        </span>
-                      </div>
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
