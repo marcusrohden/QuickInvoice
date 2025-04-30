@@ -939,6 +939,25 @@ export default function Home() {
                   </div>
                 </div>
                 
+                <div className="stat-card">
+                  <div className="stat-content">
+                    <span className="stat-label">Prize Distribution</span>
+                    <span className="stat-value">
+                      {Object.values(houseStats.prizeDistribution || {}).reduce((sum, count) => sum + count, 0)} prizes
+                    </span>
+                    <div className="stat-sublabel">
+                      {Object.entries(houseStats.prizeDistribution || {})
+                        .sort()
+                        .map(([type, count]) => (
+                          <div key={type} className="flex justify-between">
+                            <span>{type}:</span>
+                            <span>{count}</span>
+                          </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
                 {/* Only show best/worst break stats in removeHitSlots mode */}
                 {simulationMode === 'removeHitSlots' && (
                   <>
