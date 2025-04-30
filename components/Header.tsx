@@ -34,23 +34,24 @@ export function Header() {
   };
 
   return (
-    <div className="relative">
-      {/* Logo positioned absolutely, completely outside the header flow */}
-      <div className="absolute top-3 left-4 z-[60]">
-        <Link href="/" className="block">
-          <img 
-            src="/images/logo.png" 
-            alt="Roulette Simulator Logo" 
-            className="h-[50px] w-[50px]" 
-            style={{ height: '50px', width: '50px' }}
-          />
-        </Link>
-      </div>
-
-      {/* Header with fixed height not affected by logo */}
+    <div>
+      {/* Fixed position header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex h-14 w-full items-center justify-end pr-6">
-          <div className="flex items-center">
+        <div className="relative h-14">
+          {/* Logo absolute positioned */}
+          <div className="absolute left-4 top-1/2 -translate-y-1/2">
+            <Link href="/" className="block">
+              <img 
+                src="/images/logo.png" 
+                alt="Roulette Simulator Logo" 
+                className="h-[50px] w-[50px]" 
+                style={{ height: '50px', width: '50px' }}
+              />
+            </Link>
+          </div>
+          
+          {/* Right-aligned controls */}
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center">
           {mounted && (
             <Button 
               variant="outline" 
@@ -93,7 +94,7 @@ export function Header() {
             </Button>
           )}
         </div>
-      </div>
+        </div>
       </header>
     </div>
   );
