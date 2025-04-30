@@ -626,7 +626,10 @@ export default function Home() {
     setHouseStats(prev => ({
       totalEarnings: houseEarnings,
       totalSpins: prev.totalSpins + spins,
-      prizeDistribution: housePrizeDistribution
+      prizeDistribution: housePrizeDistribution,
+      // Preserve best/worst break data in standard mode
+      worstBreak: prev.worstBreak,
+      bestBreak: prev.bestBreak
     }))
   }
   

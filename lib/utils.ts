@@ -30,8 +30,8 @@ export interface SimulationStats {
 export interface HouseStatsType {
   totalEarnings: number
   totalSpins: number
-  nonTargetPrizes: number
-  targetPrizes: number
+  nonTargetPrizes?: number
+  targetPrizes?: number
   prizeDistribution: Record<string, number> // Count of each prize type hit
   worstBreak?: {
     spins: number

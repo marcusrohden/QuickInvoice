@@ -6,7 +6,7 @@ interface SimulationResultsProps {
 }
 
 const SimulationResults = ({ stats }: SimulationResultsProps) => {
-  const { targetHitAttempt, totalCost, finalSpinResult, finalPrize, finalProfit } = stats
+  const { targetHitAttempt, totalCost, finalSpinResult, finalPrize, finalProfit, finalPrizeType } = stats
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -42,6 +42,15 @@ const SimulationResults = ({ stats }: SimulationResultsProps) => {
           <div className="flex flex-col">
             <span className="text-sm text-muted-foreground">Final Prize</span>
             <span className="text-2xl font-bold">{formatCurrency(finalPrize)}</span>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col">
+            <span className="text-sm text-muted-foreground">Prize Type</span>
+            <span className="text-2xl font-bold">{finalPrizeType || 'Unknown'}</span>
           </div>
         </CardContent>
       </Card>
