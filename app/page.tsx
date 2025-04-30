@@ -717,38 +717,6 @@ export default function Home() {
               )}
               <button className="button-outline" onClick={clearHistory}>Clear History</button>
             </div>
-            
-            {/* Hit Slots Status for Remove Hit Slots mode */}
-            {simulationMode === 'removeHitSlots' && (
-              <div className="hit-slots-status">
-                <div className="divider"></div>
-                <h3 className="subsection-heading">Hit Slots Status</h3>
-                <div className="stats-grid">
-                  <div className="stat-card">
-                    <div className="stat-content">
-                      <span className="stat-label">Hit Slots</span>
-                      <span className="stat-value">{hitSlots.length}</span>
-                    </div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-content">
-                      <span className="stat-label">Remaining Slots</span>
-                      <span className="stat-value">{totalSlots - hitSlots.length}</span>
-                    </div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-content">
-                      <span className="stat-label">Total Slots</span>
-                      <span className="stat-value">{totalSlots}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <p className="text-hint mt-2">
-                  In this mode, slots are removed from the wheel after being hit. Each spin selects from the remaining slots. The break completes when all special prize slots (non-default) are hit. Default slots can be hit but don't affect when the break ends.
-                </p>
-              </div>
-            )}
           </div>
         </div>
         
