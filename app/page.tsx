@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { formatCurrency } from '@/lib/utils'
+import { Header } from '@/components/Header'
+import { SaveConfigurationForm } from '@/components/SaveConfigurationForm'
 
 // Define types
 interface SpinResult {
@@ -57,6 +59,7 @@ export default function Home() {
   
   // Modal state
   const [showPrizeModal, setShowPrizeModal] = useState(false)
+  const [showSaveModal, setShowSaveModal] = useState(false)
   
   // Simulation mode: 'normal' or 'removeHitSlots'
   const [simulationMode, setSimulationMode] = useState<'normal' | 'removeHitSlots'>('normal')
@@ -155,7 +158,7 @@ export default function Home() {
     setPrizeConfigs(prizeConfigs.filter(prize => prize.id !== id))
   }
   
-  // Determine which prize was hit based on slot number and return more detailed info for remove hit slots mode
+  // Determine which prize was hit based on slot number and return more detailed info
   const determinePrizeHit = (
     slotNumber: number, 
     configs: PrizeConfig[] = prizeConfigs
@@ -510,351 +513,287 @@ export default function Home() {
   }
 
   return (
-    <main>
-      <h1 className="main-heading">Roulette Simulator</h1>
+    <div>
+      <Header />
       
-      <div className="tab-container">
-        <div 
-          className={`tab ${simulationMode === 'normal' ? 'active' : ''}`}
-          onClick={() => setSimulationMode('normal')}
-        >
-          Normal Mode
-        </div>
-        <div 
-          className={`tab ${simulationMode === 'removeHitSlots' ? 'active' : ''}`}
-          onClick={() => setSimulationMode('removeHitSlots')}
-        >
-          Remove Hit Slots
-        </div>
-      </div>
-      
-      <div className="grid">
-        <div className="card">
-          <div className="card-header">
-            <h2 className="section-heading">Game Parameters</h2>
+      <main>
+        <h1 className="main-heading">Roulette Simulator</h1>
+        
+        <div className="tab-container">
+          <div 
+            className={`tab ${simulationMode === 'normal' ? 'active' : ''}`}
+            onClick={() => setSimulationMode('normal')}
+          >
+            Normal Mode
           </div>
-          <div className="card-content">
-            <div className="space-y-4">
-              <div className="form-group">
-                <label htmlFor="totalSlots">Total Number of Slots</label>
-                <input
-                  id="totalSlots"
-                  type="number"
-                  min="2"
-                  value={totalSlots}
-                  onChange={handleTotalSlotsChange}
-                />
-                <p className="text-hint">Total slots on the wheel</p>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="costPerSpin">Price per Spin</label>
-                <input
-                  id="costPerSpin"
-                  type="number"
-                  min="0"
-                  value={costPerSpin}
-                  onChange={handleCostChange}
-                />
-                <p className="text-hint">Current: {formatCurrency(costPerSpin)}</p>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="defaultPrize">Default Prize</label>
-                <input
-                  id="defaultPrize"
-                  type="number"
-                  min="0"
-                  value={defaultPrize}
-                  onChange={handleDefaultPrizeChange}
-                />
-                <p className="text-hint">Current: {formatCurrency(defaultPrize)}</p>
-                <p className="text-hint">For {remainingSlots} default slots</p>
+          <div 
+            className={`tab ${simulationMode === 'removeHitSlots' ? 'active' : ''}`}
+            onClick={() => setSimulationMode('removeHitSlots')}
+          >
+            Remove Hit Slots
+          </div>
+        </div>
+      
+        <div className="grid">
+          <div className="card">
+            <div className="card-header">
+              <h2 className="section-heading">Game Parameters</h2>
+            </div>
+            <div className="card-content">
+              <div className="space-y-4">
+                <div className="form-group">
+                  <label htmlFor="totalSlots">Total Number of Slots</label>
+                  <input
+                    id="totalSlots"
+                    type="number"
+                    min="2"
+                    value={totalSlots}
+                    onChange={handleTotalSlotsChange}
+                  />
+                  <p className="text-hint">Total slots on the wheel</p>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="costPerSpin">Price per Spin</label>
+                  <input
+                    id="costPerSpin"
+                    type="number"
+                    min="0"
+                    value={costPerSpin}
+                    onChange={handleCostChange}
+                  />
+                  <p className="text-hint">Current: {formatCurrency(costPerSpin)}</p>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="defaultPrize">Default Prize</label>
+                  <input
+                    id="defaultPrize"
+                    type="number"
+                    min="0"
+                    value={defaultPrize}
+                    onChange={handleDefaultPrizeChange}
+                  />
+                  <p className="text-hint">Current: {formatCurrency(defaultPrize)}</p>
+                  <p className="text-hint">For {remainingSlots} default slots</p>
+                </div>
+                
+                <div className="divider"></div>
+                
+                <div className="prize-table-header">
+                  <h3 className="subsection-heading">Prize Configurations</h3>
+                  <button 
+                    className="button-icon" 
+                    onClick={() => setShowPrizeModal(true)}
+                    title="Add New Prize"
+                  >
+                    +
+                  </button>
+                </div>
+                
+                <div className="prize-table-container">
+                  <table className="prize-table">
+                    <thead>
+                      <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Value</th>
+                        <th>Total</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {prizeConfigs.map((prize) => (
+                        <tr key={prize.id}>
+                          <td>{prize.name}</td>
+                          <td>{prize.slots} slot{prize.slots !== 1 ? 's' : ''}</td>
+                          <td>{formatCurrency(prize.value)}</td>
+                          <td>{formatCurrency(prize.value * prize.slots)}</td>
+                          <td>
+                            <button 
+                              className="button-small button-danger"
+                              onClick={() => removePrizeConfig(prize.id)}
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="default-prize-row">
+                        <td>Remaining Slots (Default)</td>
+                        <td>{remainingSlots} slot{remainingSlots !== 1 ? 's' : ''}</td>
+                        <td>{formatCurrency(defaultPrize)}</td>
+                        <td>{formatCurrency(defaultPrize * remainingSlots)}</td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Prize Modal */}
+                {showPrizeModal && (
+                  <div className="modal-overlay">
+                    <div className="modal-content">
+                      <div className="modal-header">
+                        <h3>Add New Prize</h3>
+                        <button 
+                          className="button-icon" 
+                          onClick={() => setShowPrizeModal(false)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="modal-body">
+                        <div className="form-group">
+                          <label htmlFor="newPrizeName">Prize Name</label>
+                          <input
+                            id="newPrizeName"
+                            type="text"
+                            value={newPrizeName}
+                            onChange={(e) => setNewPrizeName(e.target.value)}
+                            placeholder="e.g., Jackpot"
+                          />
+                        </div>
+                        
+                        <div className="form-group">
+                          <label htmlFor="newPrizeValue">Prize Value</label>
+                          <input
+                            id="newPrizeValue"
+                            type="number"
+                            min="1"
+                            value={newPrizeValue}
+                            onChange={(e) => setNewPrizeValue(parseInt(e.target.value) || 0)}
+                          />
+                          <p className="text-hint">{formatCurrency(newPrizeValue)}</p>
+                        </div>
+                        
+                        <div className="form-group">
+                          <label htmlFor="newPrizeSlots">Number of Slots</label>
+                          <input
+                            id="newPrizeSlots"
+                            type="number"
+                            min="1"
+                            max={totalSlots - prizeConfigs.reduce((total, prize) => total + prize.slots, 0)}
+                            value={newPrizeSlots}
+                            onChange={(e) => setNewPrizeSlots(parseInt(e.target.value) || 1)}
+                          />
+                        </div>
+                      </div>
+                      <div className="modal-footer">
+                        <button
+                          onClick={() => setShowPrizeModal(false)}
+                          className="button-outline"
+                        >
+                          Cancel
+                        </button>
+                        <button 
+                          onClick={() => {
+                            addPrizeConfig();
+                            setShowPrizeModal(false);
+                          }}
+                          disabled={totalSlots - prizeConfigs.reduce((total, prize) => total + prize.slots, 0) < newPrizeSlots || !newPrizeName.trim()}
+                        >
+                          Add Prize
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Save Configuration Modal */}
+                {showSaveModal && (
+                  <div className="modal-overlay">
+                    <div className="modal-content">
+                      <div className="modal-header">
+                        <h3>Save Configuration</h3>
+                        <button 
+                          className="button-icon" 
+                          onClick={() => setShowSaveModal(false)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="modal-body">
+                        <SaveConfigurationForm 
+                          configuration={{
+                            totalSlots,
+                            pricePerSpin: costPerSpin,
+                            defaultPrize,
+                            prizeConfigs
+                          }}
+                          onSaveComplete={() => setShowSaveModal(false)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="divider"></div>
               
-              <div className="prize-table-header">
-                <h3 className="subsection-heading">Prize Configurations</h3>
-                <button 
-                  className="button-icon" 
-                  onClick={() => setShowPrizeModal(true)}
-                  title="Add New Prize"
-                >
-                  +
-                </button>
+              <div className="button-group">
+                {simulationMode === 'normal' ? (
+                  // Normal mode buttons
+                  <>
+                    <button onClick={() => spinMultipleTimes(1000)}>Spin 1000 Times</button>
+                    <button onClick={() => spinMultipleTimes(100)}>Spin 100 Times</button>
+                    <button onClick={() => spinMultipleTimes(10)}>Spin 10 Times</button>
+                    <button onClick={singleSpin}>Single Spin</button>
+                  </>
+                ) : (
+                  // Remove Hit Slots mode buttons
+                  <>
+                    <button onClick={() => runBreaks(1000)}>1000 Breaks</button>
+                    <button onClick={() => runBreaks(100)}>100 Breaks</button>
+                    <button onClick={() => runBreaks(10)}>10 Breaks</button>
+                    <button onClick={() => runBreaks(1)}>Single Break</button>
+                  </>
+                )}
+                <button className="button-outline" onClick={clearHistory}>Clear History</button>
+                <button className="button-save" onClick={() => setShowSaveModal(true)}>Save Configuration</button>
               </div>
-              
-              <div className="prize-table-container">
-                <table className="prize-table">
-                  <thead>
-                    <tr>
-                      <th>Item</th>
-                      <th>Quantity</th>
-                      <th>Value</th>
-                      <th>Total</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {prizeConfigs.map((prize) => (
-                      <tr key={prize.id}>
-                        <td>{prize.name}</td>
-                        <td>{prize.slots} slot{prize.slots !== 1 ? 's' : ''}</td>
-                        <td>{formatCurrency(prize.value)}</td>
-                        <td>{formatCurrency(prize.value * prize.slots)}</td>
-                        <td>
-                          <button 
-                            className="button-small button-danger"
-                            onClick={() => removePrizeConfig(prize.id)}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    <tr className="default-prize-row">
-                      <td>Remaining Slots (Default)</td>
-                      <td>{remainingSlots} slot{remainingSlots !== 1 ? 's' : ''}</td>
-                      <td>{formatCurrency(defaultPrize)}</td>
-                      <td>{formatCurrency(defaultPrize * remainingSlots)}</td>
-                      <td></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              
-              {/* Prize Modal */}
-              {showPrizeModal && (
-                <div className="modal-overlay">
-                  <div className="modal-content">
-                    <div className="modal-header">
-                      <h3>Add New Prize</h3>
-                      <button 
-                        className="button-icon" 
-                        onClick={() => setShowPrizeModal(false)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                    <div className="modal-body">
-                      <div className="form-group">
-                        <label htmlFor="newPrizeName">Prize Name</label>
-                        <input
-                          id="newPrizeName"
-                          type="text"
-                          value={newPrizeName}
-                          onChange={(e) => setNewPrizeName(e.target.value)}
-                          placeholder="e.g., Jackpot"
-                        />
-                      </div>
-                      
-                      <div className="form-group">
-                        <label htmlFor="newPrizeValue">Prize Value</label>
-                        <input
-                          id="newPrizeValue"
-                          type="number"
-                          min="1"
-                          value={newPrizeValue}
-                          onChange={(e) => setNewPrizeValue(parseInt(e.target.value) || 0)}
-                        />
-                        <p className="text-hint">{formatCurrency(newPrizeValue)}</p>
-                      </div>
-                      
-                      <div className="form-group">
-                        <label htmlFor="newPrizeSlots">Number of Slots</label>
-                        <input
-                          id="newPrizeSlots"
-                          type="number"
-                          min="1"
-                          max={totalSlots - prizeConfigs.reduce((total, prize) => total + prize.slots, 0)}
-                          value={newPrizeSlots}
-                          onChange={(e) => setNewPrizeSlots(parseInt(e.target.value) || 1)}
-                        />
-                      </div>
-                    </div>
-                    <div className="modal-footer">
-                      <button
-                        onClick={() => setShowPrizeModal(false)}
-                        className="button-outline"
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        onClick={() => {
-                          addPrizeConfig();
-                          setShowPrizeModal(false);
-                        }}
-                        disabled={totalSlots - prizeConfigs.reduce((total, prize) => total + prize.slots, 0) < newPrizeSlots || !newPrizeName.trim()}
-                      >
-                        Add Prize
-                      </button>
-                    </div>
+            </div>
+          </div>
+          
+          {/* House Statistics */}
+          <div className="card">
+            <div className="card-header">
+              <h2 className="section-heading">House Statistics</h2>
+            </div>
+            <div className="card-content">
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <div className="stat-content">
+                    <span className="stat-label">House Earnings</span>
+                    <span className={`stat-value ${houseStats.totalEarnings >= 0 ? 'profit' : 'loss'}`}>
+                      {formatCurrency(houseStats.totalEarnings)}
+                    </span>
                   </div>
                 </div>
-              )}
-            </div>
-            
-            <div className="divider"></div>
-            
-            <div className="button-group">
-              {simulationMode === 'normal' ? (
-                // Normal mode buttons
-                <>
-                  <button onClick={() => spinMultipleTimes(1000)}>Spin 1000 Times</button>
-                  <button onClick={() => spinMultipleTimes(100)}>Spin 100 Times</button>
-                  <button onClick={() => spinMultipleTimes(10)}>Spin 10 Times</button>
-                  <button onClick={singleSpin}>Single Spin</button>
-                </>
-              ) : (
-                // Remove Hit Slots mode buttons
-                <>
-                  <button onClick={() => runBreaks(1000)}>1000 Breaks</button>
-                  <button onClick={() => runBreaks(100)}>100 Breaks</button>
-                  <button onClick={() => runBreaks(10)}>10 Breaks</button>
-                  <button onClick={() => runBreaks(1)}>Single Break</button>
-                </>
-              )}
-              <button className="button-outline" onClick={clearHistory}>Clear History</button>
-            </div>
-          </div>
-        </div>
-        
-        {/* House Statistics moved above Simulation Results */}
-        <div className="card">
-          <div className="card-header">
-            <h2 className="section-heading">House Statistics</h2>
-          </div>
-          <div className="card-content">
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-content">
-                  <span className="stat-label">House Earnings</span>
-                  <span className={`stat-value ${houseStats.totalEarnings >= 0 ? 'profit' : 'loss'}`}>
-                    {formatCurrency(houseStats.totalEarnings)}
-                  </span>
+                
+                <div className="stat-card">
+                  <div className="stat-content">
+                    <span className="stat-label">Total Spins</span>
+                    <span className="stat-value">{houseStats.totalSpins}</span>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="stat-card">
-                <div className="stat-content">
-                  <span className="stat-label">Total Spins</span>
-                  <span className="stat-value">{houseStats.totalSpins}</span>
-                </div>
-              </div>
-              
-              <div className="stat-card">
-                <div className="stat-content">
-                  <span className="stat-label">Profit Rate</span>
-                  <span className={`stat-value ${houseStats.totalEarnings >= 0 ? 'profit' : 'loss'}`}>
-                    {houseStats.totalSpins > 0 
-                      ? `${((houseStats.totalEarnings / (houseStats.totalSpins * costPerSpin)) * 100).toFixed(2)}%`
-                      : '0.00%'
-                    }
-                  </span>
-                  <span className="stat-hint">
-                    {houseStats.totalSpins > 0 
-                      ? `${formatCurrency(houseStats.totalEarnings)} / ${formatCurrency(houseStats.totalSpins * costPerSpin)}`
-                      : ''
-                    }
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="divider"></div>
-            
-            <h3 className="subsection-heading">Prize Distribution</h3>
-            
-            <div className="prize-distribution-table-container">
-              {Object.keys(houseStats.prizeDistribution).length === 0 ? (
-                <p className="text-center">No spins recorded yet</p>
-              ) : (
-                <table className="prize-distribution-table">
-                  <thead>
-                    <tr>
-                      <th>Prize Type</th>
-                      <th>Hits</th>
-                      <th>Cost of Prizes</th>
-                      <th>Paid in Spins</th>
-                      <th>Profit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(houseStats.prizeDistribution).map(([prizeType, count]) => {
-                      // Determine prize value from the prize type
-                      let prizeValue = defaultPrize; // Default value
-                      
-                      // Match against special prizes
-                      const matchingPrize = prizeConfigs.find(p => p.name === prizeType);
-                      if (matchingPrize) {
-                        prizeValue = matchingPrize.value;
+                
+                <div className="stat-card">
+                  <div className="stat-content">
+                    <span className="stat-label">Profit Rate</span>
+                    <span className={`stat-value ${houseStats.totalEarnings >= 0 ? 'profit' : 'loss'}`}>
+                      {houseStats.totalSpins > 0 
+                        ? `${((houseStats.totalEarnings / (houseStats.totalSpins * costPerSpin)) * 100).toFixed(2)}%`
+                        : '0.00%'
                       }
-                      
-                      const costOfPrizes = count * prizeValue;
-                      const paidInSpins = count * costPerSpin;
-                      const profit = paidInSpins - costOfPrizes;
-                      
-                      return (
-                        <tr key={prizeType}>
-                          <td>{prizeType}</td>
-                          <td>{count} hit{count !== 1 ? 's' : ''}</td>
-                          <td>{formatCurrency(costOfPrizes)}</td>
-                          <td>{formatCurrency(paidInSpins)}</td>
-                          <td className={profit >= 0 ? 'profit' : 'loss'}>{formatCurrency(profit)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <div className="card">
-        <div className="card-header">
-          <h2 className="section-heading">Simulation History</h2>
-        </div>
-        <div className="divider"></div>
-        <div className="card-content p-0">
-          <div className="history-table-container">
-            {spinHistory.length === 0 ? (
-              <div className="text-center p-8">
-                <p>No spin history yet. Run a simulation to see results.</p>
-              </div>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Attempt</th>
-                    <th>Spin Result</th>
-                    <th>Prize Type</th>
-                    <th>Price</th>
-                    <th>Prize</th>
-                    <th>Profit/Loss</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {spinHistory.map((spin, index) => (
-                    <tr key={index}>
-                      <td>{spin.attempt}</td>
-                      <td>Slot {spin.result}</td>
-                      <td>{spin.prizeType}</td>
-                      <td>{formatCurrency(spin.cost)}</td>
-                      <td>{formatCurrency(spin.prize)}</td>
-                      <td className={spin.profit >= 0 ? 'profit' : 'loss'}>
-                        {formatCurrency(spin.profit)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-      </div>
-    </main>
+      </main>
+    </div>
   )
 }
