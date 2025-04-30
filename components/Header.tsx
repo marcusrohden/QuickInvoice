@@ -35,16 +35,18 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
-        <div>
+      <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
+        <div className="absolute top-1 left-4 z-10">
           <Link href="/" className="flex items-center">
             <img 
               src="/images/logo.png" 
               alt="Roulette Simulator Logo" 
-              className="h-12 w-12" 
+              className="h-16 w-16" 
             />
           </Link>
         </div>
+        
+        <div className="flex-1"></div>
         
         <div className="flex items-center">
           {mounted && (
