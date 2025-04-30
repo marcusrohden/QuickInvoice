@@ -49,7 +49,7 @@ export function Header() {
 
       {/* Header with fixed height not affected by logo */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 max-w-screen-2xl items-center justify-end px-4">
+        <div className="flex h-14 w-full items-center justify-end pr-6">
           <div className="flex items-center">
           {mounted && (
             <Button 
