@@ -29,6 +29,14 @@ interface HouseStatsType {
   totalEarnings: number
   totalSpins: number
   prizeDistribution: Record<string, number> // Count of each prize type hit
+  worstBreak?: {
+    spins: number
+    profit: number
+  }
+  bestBreak?: {
+    spins: number
+    profit: number
+  }
 }
 
 interface PrizeConfig {
@@ -80,7 +88,15 @@ export default function Home() {
   const [houseStats, setHouseStats] = useState<HouseStatsType>({
     totalEarnings: 0,
     totalSpins: 0,
-    prizeDistribution: {} // Initialize empty object for prize distribution counts
+    prizeDistribution: {}, // Initialize empty object for prize distribution counts
+    worstBreak: {
+      spins: 0,
+      profit: 0
+    },
+    bestBreak: {
+      spins: 0,
+      profit: 0
+    }
   })
   
   // State to track loading status
@@ -128,7 +144,15 @@ export default function Home() {
       setHouseStats({
         totalEarnings: 0,
         totalSpins: 0,
-        prizeDistribution: {}
+        prizeDistribution: {},
+        worstBreak: {
+          spins: 0,
+          profit: 0
+        },
+        bestBreak: {
+          spins: 0,
+          profit: 0
+        }
       });
       
     } catch (error) {
@@ -307,6 +331,14 @@ export default function Home() {
     }
     houseEarnings = houseStats.totalEarnings;
     
+    // For tracking best and worst breaks
+    let bestBreakProfit = houseStats.bestBreak?.profit || 0;
+    let bestBreakSpins = houseStats.bestBreak?.spins || 0;
+    let worstBreakProfit = houseStats.worstBreak?.profit || 0;
+    let worstBreakSpins = houseStats.worstBreak?.spins || 0;
+    let currentBreakProfit = 0;
+    let currentBreakSpins = 0;
+    
     // Run the requested number of break cycles
     for (let breakNum = 1; breakNum <= breakCount; breakNum++) {
       // Get total number of prize slots (excluding default slots)
@@ -322,6 +354,10 @@ export default function Home() {
       let remainingPrizeSlots = totalPrizeSlots;
       let breakSpinCount = 0;
       let remainingSlotsToHit = totalSlots; // All slots need to be hit in a break
+      
+      // Reset tracking for this break
+      currentBreakProfit = 0;
+      currentBreakSpins = 0;
       
       // Continue until all special prize slots are hit in this break
       while (remainingPrizeSlots > 0) {
@@ -341,11 +377,15 @@ export default function Home() {
         }
         
         totalCost += costPerSpin;
+        currentBreakSpins++;
         
         // Determine prize based on slot hit
         const hitResult = determinePrizeHit(currentSpinResult);
         // Calculate profit from house perspective (price received minus prize paid)
         const profit = costPerSpin - hitResult.prize;
+        
+        // Track per-break profit (from house perspective)
+        currentBreakProfit += profit;
         
         // Add to history (but limit the entries we keep for performance)
         // For the final break or if we're only doing a few breaks, keep all spins
@@ -377,6 +417,30 @@ export default function Home() {
           remainingPrizeSlots--;
           totalPrizesRemoved++;
         }
+      }
+      
+      // After the break is complete, check if it's the best or worst break
+      // For best break: highest profit-per-spin ratio (or just highest profit if equal spins)
+      const thisBreakProfitPerSpin = currentBreakProfit / currentBreakSpins;
+      
+      // First check if this is the best break
+      if (currentBreakSpins > 0 && (
+          // If no best break set yet OR this break has better profit ratio
+          bestBreakSpins === 0 || 
+          thisBreakProfitPerSpin > (bestBreakProfit / bestBreakSpins)
+        )) {
+        bestBreakProfit = currentBreakProfit;
+        bestBreakSpins = currentBreakSpins;
+      }
+      
+      // Now check if this is the worst break
+      if (currentBreakSpins > 0 && (
+          // If no worst break set yet OR this break has worse profit ratio 
+          worstBreakSpins === 0 || 
+          thisBreakProfitPerSpin < (worstBreakProfit / worstBreakSpins)
+        )) {
+        worstBreakProfit = currentBreakProfit;
+        worstBreakSpins = currentBreakSpins;
       }
     }
     
@@ -424,7 +488,15 @@ export default function Home() {
     setHouseStats(prev => ({
       totalEarnings: houseEarnings,
       totalSpins: prev.totalSpins + history.length,
-      prizeDistribution: housePrizeDistribution
+      prizeDistribution: housePrizeDistribution,
+      worstBreak: {
+        spins: worstBreakSpins,
+        profit: worstBreakProfit
+      },
+      bestBreak: {
+        spins: bestBreakSpins,
+        profit: bestBreakProfit
+      }
     }));
   }
   
@@ -564,7 +636,15 @@ export default function Home() {
     setHouseStats({
       totalEarnings: 0,
       totalSpins: 0,
-      prizeDistribution: {}
+      prizeDistribution: {},
+      worstBreak: {
+        spins: 0,
+        profit: 0
+      },
+      bestBreak: {
+        spins: 0,
+        profit: 0
+      }
     })
     
     // Reset hit slots for "Remove Hit Slots" mode
