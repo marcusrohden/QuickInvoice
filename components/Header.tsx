@@ -41,14 +41,15 @@ export function Header() {
           <img 
             src="/images/logo.png" 
             alt="Roulette Simulator Logo" 
-            className="h-16 w-16" 
+            className="h-[50px] w-[50px]" 
+            style={{ height: '50px', width: '50px' }}
           />
         </Link>
       </div>
 
       {/* Header with fixed height not affected by logo */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-12 max-w-screen-2xl items-center justify-end">
+        <div className="container flex h-14 max-w-screen-2xl items-center justify-end px-4">
           <div className="flex items-center">
           {mounted && (
             <Button 
