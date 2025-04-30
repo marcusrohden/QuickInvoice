@@ -799,9 +799,9 @@ export default function Home() {
                         <tr key={prizeType}>
                           <td>{prizeType}</td>
                           <td>{count} hit{count !== 1 ? 's' : ''}</td>
-                          <td className="text-right">{formatCurrency(costOfPrizes)}</td>
-                          <td className="text-right">{formatCurrency(paidInSpins)}</td>
-                          <td className={`text-right ${profit >= 0 ? 'profit' : 'loss'}`}>{formatCurrency(profit)}</td>
+                          <td>{formatCurrency(costOfPrizes)}</td>
+                          <td>{formatCurrency(paidInSpins)}</td>
+                          <td className={profit >= 0 ? 'profit' : 'loss'}>{formatCurrency(profit)}</td>
                         </tr>
                       );
                     })}

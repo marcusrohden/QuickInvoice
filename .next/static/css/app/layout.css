@@ -580,7 +580,8 @@ tr:last-child td {
 
 .prize-distribution-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   margin-top: 0.5rem;
 }
 
@@ -596,8 +597,35 @@ tr:last-child td {
   background-color: #f8fafc;
 }
 
-.prize-distribution-table td.text-right {
+/* Column alignment and widths */
+.prize-distribution-table th:nth-child(1),
+.prize-distribution-table td:nth-child(1) {
+  text-align: left;
+  width: 20%;
+}
+
+.prize-distribution-table th:nth-child(2),
+.prize-distribution-table td:nth-child(2) {
+  text-align: center;
+  width: 15%;
+}
+
+.prize-distribution-table th:nth-child(3),
+.prize-distribution-table td:nth-child(3) {
   text-align: right;
+  width: 20%;
+}
+
+.prize-distribution-table th:nth-child(4),
+.prize-distribution-table td:nth-child(4) {
+  text-align: right;
+  width: 20%;
+}
+
+.prize-distribution-table th:nth-child(5),
+.prize-distribution-table td:nth-child(5) {
+  text-align: right;
+  width: 25%;
 }
 
 .prize-distribution-table tr:hover {
