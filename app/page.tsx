@@ -260,8 +260,8 @@ export default function Home() {
       let breakSpinCount = 0;
       let remainingSlotsToHit = totalSlots; // All slots need to be hit in a break
       
-      // Continue until all prize slots are hit in this break
-      while (remainingPrizeSlots > 0 && breakHitSlots.length < totalSlots) {
+      // Continue until all special prize slots are hit in this break
+      while (remainingPrizeSlots > 0) {
         breakSpinCount++;
         
         // Get a valid slot (not already hit in this break cycle)
@@ -745,7 +745,7 @@ export default function Home() {
                 </div>
                 
                 <p className="text-hint mt-2">
-                  In this mode, each "break" is a complete cycle where all slots are removed after being hit. The break completes when all special prize slots (non-default) are hit. Running multiple breaks repeats this process the specified number of times.
+                  In this mode, slots are removed from the wheel after being hit. Each spin selects from the remaining slots. The break completes when all special prize slots (non-default) are hit. Default slots can be hit but don't affect when the break ends.
                 </p>
               </div>
             )}
