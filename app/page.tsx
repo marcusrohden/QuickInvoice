@@ -844,63 +844,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
-      <div className="card">
-        <div className="card-header">
-          <h2 className="section-heading">Simulation Results</h2>
-        </div>
-        <div className="card-content">
-          {simulationStats ? (
-            <div className="results-grid">
-              <div className="result-card">
-                <div className="result-content">
-                  <span className="result-label">Total Spins</span>
-                  <span className="result-value">{simulationStats.targetHitAttempt}</span>
-                </div>
-              </div>
-              
-              <div className="result-card">
-                <div className="result-content">
-                  <span className="result-label">Total Price</span>
-                  <span className="result-value">{formatCurrency(simulationStats.totalCost)}</span>
-                </div>
-              </div>
-              
-              <div className="result-card">
-                <div className="result-content">
-                  <span className="result-label">Last Spin Result</span>
-                  <span className="result-value">Slot {simulationStats.finalSpinResult}</span>
-                </div>
-              </div>
-              
-              <div className="result-card">
-                <div className="result-content">
-                  <span className="result-label">Prize Type</span>
-                  <span className="result-value">{simulationStats.finalPrizeType}</span>
-                </div>
-              </div>
-              
-              <div className="result-card">
-                <div className="result-content">
-                  <span className="result-label">Final Prize</span>
-                  <span className="result-value">{formatCurrency(simulationStats.finalPrize)}</span>
-                </div>
-              </div>
-              
-              <div className="result-card wide">
-                <div className="result-content">
-                  <span className="result-label">Net Profit/Loss</span>
-                  <span className={`result-value ${simulationStats.finalProfit >= 0 ? 'profit' : 'loss'}`}>
-                    {formatCurrency(simulationStats.finalProfit)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-center">Run a simulation to see results</p>
-          )}
-        </div>
-      </div>
       
       <div className="card">
         <div className="card-header">
