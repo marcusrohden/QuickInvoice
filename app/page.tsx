@@ -231,13 +231,12 @@ export default function Home() {
   }
   
   // Run breaks for the "Remove Hit Slots" mode
-  const runBreaks = (breaks: number = 1) => {
+  const runBreaks = (breakCount: number = 1) => {
     let totalCost = 0;
     let history: SpinResult[] = [];
     let housePrizeDistribution: Record<string, number> = {};
     let houseEarnings = 0;
-    let breakCount = 0;
-    let currentHitSlots = [...hitSlots];
+    let totalPrizesRemoved = 0;
     
     // Start with a copy of the current house stats
     if (houseStats.prizeDistribution) {
@@ -245,45 +244,52 @@ export default function Home() {
     }
     houseEarnings = houseStats.totalEarnings;
     
-    // Calculate remaining non-hit slots that have prizes (excluding default)
-    let remainingPrizeSlots = 0;
-    let slotCounter = 0;
-    
-    for (const prizeConfig of prizeConfigs) {
-      for (let i = 0; i < prizeConfig.slots; i++) {
-        const slotNum = slotCounter + i + 1;
-        if (!currentHitSlots.includes(slotNum)) {
-          remainingPrizeSlots++;
-        }
-      }
-      slotCounter += prizeConfig.slots;
-    }
-    
-    // Continue until we've completed all breaks or there are no special prize slots left
-    for (let breakNum = 1; breakNum <= breaks; breakNum++) {
-      // If no prize slots left to hit, stop
-      if (remainingPrizeSlots <= 0) {
-        break;
+    // Run the requested number of break cycles
+    for (let breakNum = 1; breakNum <= breakCount; breakNum++) {
+      // Get total number of prize slots (excluding default slots)
+      const totalPrizeSlots = prizeConfigs.reduce((total, prize) => total + prize.slots, 0);
+      
+      // If there are no prize slots, skip this break
+      if (totalPrizeSlots === 0) {
+        continue;
       }
       
-      let breakComplete = false;
-      let breakAttempts = 0;
+      // Create a fresh set of hit slots tracking for this break
+      let breakHitSlots: number[] = [];
+      let remainingPrizeSlots = totalPrizeSlots;
+      let breakSpinCount = 0;
       
-      // Keep spinning until we hit a special prize that hasn't been hit yet
-      while (!breakComplete) {
-        breakAttempts++;
+      // Continue until all prize slots are hit in this break
+      while (remainingPrizeSlots > 0) {
+        breakSpinCount++;
         
-        // Get a slot that hasn't been hit yet
-        const availableSlots = totalSlots - currentHitSlots.length;
-        const currentSpinResult = getValidRandomSlot();
+        // Get a valid slot (not already hit in this break cycle)
+        let validSlot = false;
+        let currentSpinResult = 0;
+        
+        // Find a slot that hasn't been hit yet in this break
+        while (!validSlot) {
+          const randomSlot = Math.floor(Math.random() * totalSlots) + 1;
+          if (!breakHitSlots.includes(randomSlot)) {
+            currentSpinResult = randomSlot;
+            validSlot = true;
+          }
+        }
+        
         totalCost += costPerSpin;
         
         // Determine prize based on slot hit
         const hitResult = determinePrizeHit(currentSpinResult);
         const profit = hitResult.prize - costPerSpin;
         
-        // Add to history
-        if (breakNum === breaks || breaks <= 10) {
+        // Add to history (but limit the entries we keep for performance)
+        // For the final break or if we're only doing a few breaks, keep all spins
+        // Otherwise, just keep the last few spins of each break
+        const isLastBreak = breakNum === breakCount;
+        const isFewBreaks = breakCount <= 5;
+        const isImportantSpin = breakHitSlots.length >= totalPrizeSlots - 5; // Last few prize hits
+        
+        if (isLastBreak || isFewBreaks || isImportantSpin) {
           history.push({
             attempt: spinHistory.length + history.length + 1,
             result: currentSpinResult,
@@ -298,43 +304,44 @@ export default function Home() {
         housePrizeDistribution[hitResult.prizeType] = (housePrizeDistribution[hitResult.prizeType] || 0) + 1;
         houseEarnings += costPerSpin - hitResult.prize;
         
-        // If we hit a special prize (not default), mark it as hit and complete this break
+        // If we hit a special prize (not default), mark it as hit
         if (hitResult.isSpecialPrize) {
-          // Add this slot to hit slots
-          currentHitSlots.push(currentSpinResult);
-          
-          // This break is complete
-          breakComplete = true;
-          breakCount++;
+          // Track this slot as hit in this break
+          breakHitSlots.push(currentSpinResult);
           remainingPrizeSlots--;
+          totalPrizesRemoved++;
         }
       }
     }
     
-    // Update hit slots
-    setHitSlots(currentHitSlots);
-    setAvailableSlots(totalSlots - currentHitSlots.length);
+    // Set hit slots to empty since we completed full breaks
+    setHitSlots([]);
+    setAvailableSlots(totalSlots);
     
-    // Set simulation results based on the last break
+    // Set simulation results based on the completed breaks
     const lastAttemptNum = spinHistory.length + history.length;
     const lastResult = history.length > 0 
       ? history[history.length - 1] 
       : { 
           attempt: lastAttemptNum,
           result: 0,
-          cost: breakCount * costPerSpin,
+          cost: totalCost,
           prize: 0,
-          profit: -breakCount * costPerSpin,
+          profit: -totalCost,
           prizeType: 'Unknown'
         };
     
+    // Calculate how many prize cycles were completed
+    const prizeCount = prizeConfigs.reduce((total, prize) => total + prize.slots, 0);
+    const completedCycles = prizeCount > 0 ? Math.floor(totalPrizesRemoved / prizeCount) : 0;
+    
     setSimulationStats({
-      targetHitAttempt: breakCount, // The number of breaks completed
+      targetHitAttempt: breakCount, // The number of break cycles completed
       totalCost,
       finalSpinResult: lastResult.result,
       finalPrize: lastResult.prize,
       finalProfit: lastResult.prize - totalCost,
-      finalPrizeType: `Removed ${breakCount} prize${breakCount !== 1 ? 's' : ''}`
+      finalPrizeType: `Completed ${breakCount} breaks (${totalPrizesRemoved} prizes hit)`
     });
     
     // Update spin history (limit to most recent entries if there are too many)
@@ -733,7 +740,7 @@ export default function Home() {
                 </div>
                 
                 <p className="text-hint mt-2">
-                  In this mode, slots are removed once they're hit. Prize values and quantities remain unchanged.
+                  In this mode, each "break" is a complete cycle where all prize slots are hit. Running multiple breaks repeats this process the specified number of times.
                 </p>
               </div>
             )}
