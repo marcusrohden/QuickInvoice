@@ -298,15 +298,36 @@ tr:last-child td {
 }
 
 .button-group {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
   margin-top: 1.5rem;
 }
 
-.button-group button {
-  flex: 1;
-  min-width: 120px;
+@media (min-width: 768px) {
+  .button-group {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .button-group button {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+.button-group-vertical {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .button-group-vertical {
+    display: flex;
+    flex-wrap: wrap;
+  }
 }
 
 .button-outline {
@@ -317,8 +338,14 @@ tr:last-child td {
 /* Result cards */
 .results-grid, .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: 1fr;
   gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .results-grid, .stats-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
 }
 
 .result-card, .stat-card {
@@ -389,8 +416,17 @@ tr:last-child td {
 
 .prize-config-details {
   display: flex;
-  gap: 1rem;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+@media (min-width: 640px) {
+  .prize-config-details {
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+  }
 }
 
 .prize-name {
@@ -451,13 +487,26 @@ tr:last-child td {
 /* Prize Table Styles */
 .prize-table-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .prize-table-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.prize-table-container {
+  overflow-x: auto;
 }
 
 .prize-table {
   width: 100%;
+  min-width: 500px;
   border-collapse: collapse;
 }
 
@@ -537,17 +586,41 @@ tr:last-child td {
 
 .modal-footer {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
   gap: 0.75rem;
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border);
 }
 
+@media (min-width: 640px) {
+  .modal-footer {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}
+
+.modal-footer button {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .modal-footer button {
+    width: auto;
+  }
+}
+
 /* Tab Styles */
 .tab-container {
   display: flex;
+  flex-direction: column;
   border-bottom: 1px solid var(--border);
   margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .tab-container {
+    flex-direction: row;
+  }
 }
 
 .tab {
@@ -555,6 +628,13 @@ tr:last-child td {
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s ease;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .tab {
+    text-align: left;
+  }
 }
 
 .tab:hover {
