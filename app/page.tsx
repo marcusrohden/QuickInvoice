@@ -90,6 +90,7 @@ export default function Home() {
   const [houseStats, setHouseStats] = useState<HouseStatsType>({
     totalEarnings: 0,
     totalSpins: 0,
+    totalBreaks: 0,
     prizeDistribution: {}, // Initialize empty object for prize distribution counts
     worstBreak: {
       spins: 0,
@@ -100,7 +101,9 @@ export default function Home() {
       profit: 0
     },
     worstBreakProbability: 0,
-    bestBreakProbability: 0
+    bestBreakProbability: 0,
+    worstBreakSpinProbability: 0,
+    bestBreakSpinProbability: 0
   })
   
   // State to track loading status
@@ -148,6 +151,7 @@ export default function Home() {
       setHouseStats({
         totalEarnings: 0,
         totalSpins: 0,
+        totalBreaks: 0,
         prizeDistribution: {},
         worstBreak: {
           spins: 0,
@@ -158,7 +162,9 @@ export default function Home() {
           profit: 0
         },
         worstBreakProbability: 0,
-        bestBreakProbability: 0
+        bestBreakProbability: 0,
+        worstBreakSpinProbability: 0,
+        bestBreakSpinProbability: 0
       });
       
     } catch (error) {
@@ -497,25 +503,38 @@ export default function Home() {
     // The probability of hitting the exact same sequence of slots in consecutive breaks
     let worstBreakProbability = 0;
     let bestBreakProbability = 0;
+    let worstBreakSpinProbability = 0;
+    let bestBreakSpinProbability = 0;
     
     if (worstBreakSpins > 0 && totalSlots > 0) {
       // Calculate probability based on the specific sequence needed
       // We need to hit exactly worstBreakSpins slots in sequence, for the number of breaks tested
       const singleWorstBreakProbability = Math.pow(1/totalSlots, worstBreakSpins);
+      
+      // Probability based on consecutive breaks
       worstBreakProbability = Math.pow(singleWorstBreakProbability, breakCount);
+      
+      // Probability based on consecutive spins (one spin after another)
+      worstBreakSpinProbability = Math.pow(1/totalSlots, worstBreakSpins);
     }
     
     if (bestBreakSpins > 0 && totalSlots > 0) {
       // Calculate probability based on the specific sequence needed
       // We need to hit exactly bestBreakSpins slots in sequence, for the number of breaks tested
       const singleBestBreakProbability = Math.pow(1/totalSlots, bestBreakSpins);
+      
+      // Probability based on consecutive breaks
       bestBreakProbability = Math.pow(singleBestBreakProbability, breakCount);
+      
+      // Probability based on consecutive spins (one spin after another)
+      bestBreakSpinProbability = Math.pow(1/totalSlots, bestBreakSpins);
     }
     
     // Update house stats in a single update at the end
     setHouseStats(prev => ({
       totalEarnings: houseEarnings,
       totalSpins: prev.totalSpins + history.length,
+      totalBreaks: (prev.totalBreaks || 0) + breakCount,
       prizeDistribution: housePrizeDistribution,
       worstBreak: {
         spins: worstBreakSpins,
@@ -526,7 +545,9 @@ export default function Home() {
         profit: bestBreakProfit
       },
       worstBreakProbability,
-      bestBreakProbability
+      bestBreakProbability,
+      worstBreakSpinProbability,
+      bestBreakSpinProbability
     }));
   }
   
@@ -669,6 +690,7 @@ export default function Home() {
     setHouseStats({
       totalEarnings: 0,
       totalSpins: 0,
+      totalBreaks: 0,
       prizeDistribution: {},
       worstBreak: {
         spins: 0,
@@ -679,7 +701,9 @@ export default function Home() {
         profit: 0
       },
       worstBreakProbability: 0,
-      bestBreakProbability: 0
+      bestBreakProbability: 0,
+      worstBreakSpinProbability: 0,
+      bestBreakSpinProbability: 0
     })
     
     // Reset hit slots for "Remove Hit Slots" mode

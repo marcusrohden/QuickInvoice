@@ -30,6 +30,7 @@ export interface SimulationStats {
 export interface HouseStatsType {
   totalEarnings: number
   totalSpins: number
+  totalBreaks?: number // Count of complete breaks for Remove Hit Slots mode
   nonTargetPrizes?: number
   targetPrizes?: number
   prizeDistribution: Record<string, number> // Count of each prize type hit
@@ -41,8 +42,11 @@ export interface HouseStatsType {
     spins: number
     profit: number
   }
-  worstBreakProbability?: number // Probability of hitting 5 worst breaks consecutively
-  bestBreakProbability?: number // Probability of hitting 5 best breaks consecutively
+  worstBreakProbability?: number // Probability of hitting consecutive worst breaks
+  bestBreakProbability?: number // Probability of hitting consecutive best breaks
+  // Probabilities based on spins rather than breaks
+  worstBreakSpinProbability?: number
+  bestBreakSpinProbability?: number
 }
 
 export const formatCurrency = (amount: number): string => {
