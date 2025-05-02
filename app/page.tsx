@@ -1021,9 +1021,9 @@ export default function Home() {
                             <span>5x Consecutive Probability:</span>
                             <span>
                               {houseStats.bestBreakProbability && houseStats.bestBreakProbability > 0 ? 
-                                (houseStats.bestBreakProbability < 0.0000001 ? 
-                                  houseStats.bestBreakProbability.toExponential(6) : 
-                                  (houseStats.bestBreakProbability * 100).toFixed(6) + '%') : 
+                                (houseStats.bestBreakProbability * 100 < 0.01 ? 
+                                  '<0.01%' : 
+                                  (houseStats.bestBreakProbability * 100).toFixed(2) + '%') : 
                                 'N/A'}
                             </span>
                           </div>
@@ -1062,9 +1062,9 @@ export default function Home() {
                             <span>5x Consecutive Probability:</span>
                             <span>
                               {houseStats.worstBreakProbability && houseStats.worstBreakProbability > 0 ? 
-                                (houseStats.worstBreakProbability < 0.0000001 ? 
-                                  houseStats.worstBreakProbability.toExponential(6) : 
-                                  (houseStats.worstBreakProbability * 100).toFixed(6) + '%') : 
+                                (houseStats.worstBreakProbability * 100 < 0.01 ? 
+                                  '<0.01%' : 
+                                  (houseStats.worstBreakProbability * 100).toFixed(2) + '%') : 
                                 'N/A'}
                             </span>
                           </div>
