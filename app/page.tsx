@@ -139,7 +139,7 @@ export default function Home() {
       // Convert prize configs to our format
       if (config.prizeConfigs && Array.isArray(config.prizeConfigs)) {
         setPrizeConfigs(config.prizeConfigs.map((prize: any, index: number) => ({
-          id: `prize${index + 1}`,
+          id: prize.id || `prize_${Date.now()}_${index}`, // Use existing ID or generate a unique one
           name: prize.name || `Prize ${index + 1}`,
           unitCost: prize.unitCost || prize.value || 0, // support both new and old format
           slots: prize.slots || 0,
@@ -244,9 +244,12 @@ export default function Home() {
       return
     }
     
+    // Generate a unique ID for the new prize using timestamp
+    const uniqueId = `prize_${Date.now()}`;
+    
     // Add new prize configuration
     const newPrize: PrizeConfig = {
-      id: `prize${prizeConfigs.length + 1}`,
+      id: uniqueId,
       name: newPrizeName,
       unitCost: newPrizeValue,
       slots: newPrizeSlots,
