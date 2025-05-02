@@ -56,6 +56,7 @@ export default function Home() {
   const [totalSlots, setTotalSlots] = useState(25)
   const [costPerSpin, setCostPerSpin] = useState(25)
   const [defaultPrize, setDefaultPrize] = useState(10)
+  const [commissionFee, setCommissionFee] = useState(0) // Platform commission fee percentage (0% by default)
   
   // Prize configurations with their quantity and unit cost
   const [prizeConfigs, setPrizeConfigs] = useState<PrizeConfig[]>([
@@ -206,6 +207,14 @@ export default function Home() {
     const value = parseInt(e.target.value)
     if (!isNaN(value) && value >= 0) {
       setDefaultPrize(value)
+    }
+  }
+  
+  // Handler for commission fee percentage change
+  const handleCommissionFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value)
+    if (!isNaN(value) && value >= 0 && value <= 100) {
+      setCommissionFee(value)
     }
   }
 
@@ -558,8 +567,12 @@ export default function Home() {
     
     // Determine prize based on slot hit
     const { prize, prizeType } = determinePrizeHit(currentSpinResult)
-    // Calculate profit from house perspective (price received minus prize paid)
-    const profit = costPerSpin - prize
+    
+    // Calculate commission amount
+    const commissionAmount = (costPerSpin * commissionFee) / 100
+    
+    // Calculate profit from house perspective (price received minus prize paid minus commission)
+    const profit = costPerSpin - prize - commissionAmount
     
     // Create history entry
     const attempt = spinHistory.length + 1
@@ -582,9 +595,17 @@ export default function Home() {
       updatedDistribution[prizeType] = (updatedDistribution[prizeType] || 0) + 1
       
       return {
-        totalEarnings: prev.totalEarnings + costPerSpin - prize,
+        totalEarnings: prev.totalEarnings + profit, // Now includes commission deduction
         totalSpins: prev.totalSpins + 1,
-        prizeDistribution: updatedDistribution
+        prizeDistribution: updatedDistribution,
+        // Preserve previous break-related statistics
+        worstBreak: prev.worstBreak,
+        bestBreak: prev.bestBreak,
+        worstBreakProbability: prev.worstBreakProbability,
+        bestBreakProbability: prev.bestBreakProbability,
+        worstBreakSpinProbability: prev.worstBreakSpinProbability,
+        bestBreakSpinProbability: prev.bestBreakSpinProbability,
+        totalBreaks: prev.totalBreaks
       }
     })
     
@@ -594,7 +615,7 @@ export default function Home() {
       totalCost: costPerSpin,
       finalSpinResult: currentSpinResult,
       finalPrize: prize,
-      finalProfit: profit,
+      finalProfit: profit, // Now includes commission deduction
       finalPrizeType: prizeType
     })
   }
@@ -606,6 +627,7 @@ export default function Home() {
     let history: SpinResult[] = []
     let housePrizeDistribution: Record<string, number> = {}
     let houseEarnings = 0
+    let totalCommission = 0
     
     // Start with a copy of the current house stats
     if (houseStats.prizeDistribution) {
@@ -620,8 +642,13 @@ export default function Home() {
       
       // Determine prize based on slot hit
       const { prize, prizeType } = determinePrizeHit(currentSpinResult)
-      // Calculate profit from house perspective (price received minus prize paid)
-      const profit = costPerSpin - prize
+      
+      // Calculate commission amount
+      const commissionAmount = (costPerSpin * commissionFee) / 100
+      totalCommission += commissionAmount
+      
+      // Calculate profit from house perspective (price received minus prize paid minus commission)
+      const profit = costPerSpin - prize - commissionAmount
       
       // Add to history (but limit to last 100 spins for memory/performance)
       if (spins <= 100 || attempt > spins - 100) {
@@ -637,7 +664,7 @@ export default function Home() {
       
       // Update house stats (locally rather than via setState to improve performance)
       housePrizeDistribution[prizeType] = (housePrizeDistribution[prizeType] || 0) + 1
-      houseEarnings += costPerSpin - prize
+      houseEarnings += profit // Now includes commission deduction
     }
     
     // Update results for the last spin
@@ -649,7 +676,7 @@ export default function Home() {
           result: currentSpinResult!,
           cost: costPerSpin,
           prize: 0,
-          profit: costPerSpin, // House perspective, profit is positive
+          profit: costPerSpin - ((costPerSpin * commissionFee) / 100), // Include commission
           prizeType: 'Unknown'
         }
     
@@ -659,7 +686,7 @@ export default function Home() {
       totalCost,
       finalSpinResult: lastResult.result,
       finalPrize: lastResult.prize,
-      finalProfit: totalCost - (lastResult.prize * spins), // House profit (total price - total prizes)
+      finalProfit: totalCost - (lastResult.prize * spins) - totalCommission, // House profit with commission deducted
       finalPrizeType: lastResult.prizeType
     })
     
@@ -678,9 +705,14 @@ export default function Home() {
       totalEarnings: houseEarnings,
       totalSpins: prev.totalSpins + spins,
       prizeDistribution: housePrizeDistribution,
-      // Preserve best/worst break data in standard mode
+      // Preserve break-related statistics
       worstBreak: prev.worstBreak,
-      bestBreak: prev.bestBreak
+      bestBreak: prev.bestBreak,
+      worstBreakProbability: prev.worstBreakProbability,
+      bestBreakProbability: prev.bestBreakProbability,
+      worstBreakSpinProbability: prev.worstBreakSpinProbability,
+      bestBreakSpinProbability: prev.bestBreakSpinProbability,
+      totalBreaks: prev.totalBreaks
     }))
   }
   
@@ -781,6 +813,19 @@ export default function Home() {
                   />
                   <p className="text-hint">Current: {formatCurrency(defaultPrize)}</p>
                   <p className="text-hint">For {remainingSlots} default slots</p>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="commissionFee">Platform Commission (%)</label>
+                  <input
+                    id="commissionFee"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={commissionFee}
+                    onChange={handleCommissionFeeChange}
+                  />
+                  <p className="text-hint">Fee paid to external platform hosting the games</p>
                 </div>
                 
                 <div className="divider"></div>
