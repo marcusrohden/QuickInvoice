@@ -345,6 +345,7 @@ export default function Home() {
     let housePrizeDistribution: Record<string, number> = {};
     let houseEarnings = 0;
     let totalPrizesRemoved = 0;
+    let totalCommission = 0;
     
     // Start with a copy of the current house stats
     if (houseStats.prizeDistribution) {
@@ -402,8 +403,13 @@ export default function Home() {
         
         // Determine prize based on slot hit
         const hitResult = determinePrizeHit(currentSpinResult);
-        // Calculate profit from house perspective (price received minus prize paid)
-        const profit = costPerSpin - hitResult.prize;
+        
+        // Calculate commission amount
+        const commissionAmount = (costPerSpin * commissionFee) / 100;
+        totalCommission += commissionAmount;
+        
+        // Calculate profit from house perspective (price received minus prize paid minus commission)
+        const profit = costPerSpin - hitResult.prize - commissionAmount;
         
         // Track per-break profit (from house perspective)
         currentBreakProfit += profit;
@@ -428,7 +434,7 @@ export default function Home() {
         
         // Update house stats locally
         housePrizeDistribution[hitResult.prizeType] = (housePrizeDistribution[hitResult.prizeType] || 0) + 1;
-        houseEarnings += costPerSpin - hitResult.prize;
+        houseEarnings += profit; // Now includes commission deduction
         
         // Track this slot as hit in this break
         breakHitSlots.push(currentSpinResult);
@@ -478,7 +484,7 @@ export default function Home() {
           result: 0,
           cost: totalCost,
           prize: 0,
-          profit: totalCost, // House perspective: price - prize (all price, no prizes)
+          profit: totalCost - ((totalCost * commissionFee) / 100), // Including commission
           prizeType: 'Unknown'
         };
     
@@ -491,7 +497,7 @@ export default function Home() {
       totalCost,
       finalSpinResult: lastResult.result,
       finalPrize: lastResult.prize,
-      finalProfit: totalCost - (lastResult.prize * totalPrizesRemoved), // House profit
+      finalProfit: totalCost - (lastResult.prize * totalPrizesRemoved) - totalCommission, // House profit with commission deducted
       finalPrizeType: `Completed ${breakCount} breaks (${totalPrizesRemoved} prizes hit)`
     });
     
