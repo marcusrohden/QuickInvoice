@@ -7,10 +7,39 @@ interface HouseStatsProps {
 }
 
 const HouseStats = ({ stats, simulationMode = 'normal' }: HouseStatsProps) => {
-  const { totalEarnings, totalSpins, prizeDistribution, bestBreak, worstBreak } = stats
+  const { 
+    totalEarnings, 
+    totalSpins, 
+    prizeDistribution, 
+    bestBreak, 
+    worstBreak,
+    bestBreakProbability,
+    worstBreakProbability
+  } = stats
   
   // Count total prizes from prize distribution
   const totalPrizes = Object.values(prizeDistribution || {}).reduce((sum, count) => sum + count, 0);
+  
+  // Format probability as percentage with scientific notation for very small numbers
+  const formatProbability = (probability?: number): string => {
+    if (probability === undefined || probability === 0) return 'N/A';
+    
+    // If probability is very small, use scientific notation
+    if (probability < 0.0000001) {
+      return probability.toExponential(6);
+    }
+    
+    // Otherwise format as percentage with up to 6 decimal places
+    return (probability * 100).toFixed(6) + '%';
+  };
+  
+  // Convert exponential notation to "1 in X" format for readability
+  const formatProbabilityAsOdds = (probability?: number): string => {
+    if (probability === undefined || probability === 0) return 'N/A';
+    
+    const odds = Math.round(1 / probability);
+    return `1 in ${odds.toLocaleString()}`;
+  };
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -68,45 +97,72 @@ const HouseStats = ({ stats, simulationMode = 'normal' }: HouseStatsProps) => {
         </CardContent>
       </Card>
       
-      {/* Display best/worst break stats only in removeHitSlots mode */}
+      {/* Display break performance stats only in removeHitSlots mode */}
       {simulationMode === 'removeHitSlots' && (
-        <>
-          <Card className="md:col-span-2">
-            <CardContent className="p-4">
-              <div className="flex flex-col">
-                <span className="text-sm text-muted-foreground">Best Break</span>
-                <span className="text-2xl font-bold profit">
-                  {bestBreak?.spins ? 
-                    `${formatCurrency(bestBreak.profit)} / ${bestBreak.spins} spins` : 
-                    'N/A'}
-                </span>
-                <span className="stat-sublabel">
-                  {bestBreak?.spins ? 
-                    `${formatCurrency(bestBreak.profit / bestBreak.spins)}/spin` : 
-                    ''}
-                </span>
+        <Card className="md:col-span-4">
+          <CardContent className="p-4">
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">Break Performance</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                {/* Best Break Statistics */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Best Break:</span>
+                    <span className="profit">
+                      {bestBreak?.spins ? 
+                        `${formatCurrency(bestBreak.profit)} / ${bestBreak.spins} spins` : 
+                        'N/A'}
+                    </span>
+                  </div>
+                  <div className="text-sm flex justify-between">
+                    <span>Per Spin:</span>
+                    <span className="profit">
+                      {bestBreak?.spins ? 
+                        `${formatCurrency(bestBreak.profit / bestBreak.spins)}` : 
+                        'N/A'}
+                    </span>
+                  </div>
+                  <div className="text-sm flex justify-between">
+                    <span>5x Consecutive Probability:</span>
+                    <span>{formatProbability(bestBreakProbability)}</span>
+                  </div>
+                  <div className="text-sm flex justify-between">
+                    <span>Odds:</span>
+                    <span>{formatProbabilityAsOdds(bestBreakProbability)}</span>
+                  </div>
+                </div>
+                
+                {/* Worst Break Statistics */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Worst Break:</span>
+                    <span className="loss">
+                      {worstBreak?.spins ? 
+                        `${formatCurrency(worstBreak.profit)} / ${worstBreak.spins} spins` : 
+                        'N/A'}
+                    </span>
+                  </div>
+                  <div className="text-sm flex justify-between">
+                    <span>Per Spin:</span>
+                    <span className="loss">
+                      {worstBreak?.spins ? 
+                        `${formatCurrency(worstBreak.profit / worstBreak.spins)}` : 
+                        'N/A'}
+                    </span>
+                  </div>
+                  <div className="text-sm flex justify-between">
+                    <span>5x Consecutive Probability:</span>
+                    <span>{formatProbability(worstBreakProbability)}</span>
+                  </div>
+                  <div className="text-sm flex justify-between">
+                    <span>Odds:</span>
+                    <span>{formatProbabilityAsOdds(worstBreakProbability)}</span>
+                  </div>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="md:col-span-2">
-            <CardContent className="p-4">
-              <div className="flex flex-col">
-                <span className="text-sm text-muted-foreground">Worst Break</span>
-                <span className="text-2xl font-bold loss">
-                  {worstBreak?.spins ? 
-                    `${formatCurrency(worstBreak.profit)} / ${worstBreak.spins} spins` : 
-                    'N/A'}
-                </span>
-                <span className="stat-sublabel">
-                  {worstBreak?.spins ? 
-                    `${formatCurrency(worstBreak.profit / worstBreak.spins)}/spin` : 
-                    ''}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

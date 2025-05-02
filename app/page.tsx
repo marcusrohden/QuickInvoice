@@ -98,7 +98,9 @@ export default function Home() {
     bestBreak: {
       spins: 0,
       profit: 0
-    }
+    },
+    worstBreakProbability: 0,
+    bestBreakProbability: 0
   })
   
   // State to track loading status
@@ -154,7 +156,9 @@ export default function Home() {
         bestBreak: {
           spins: 0,
           profit: 0
-        }
+        },
+        worstBreakProbability: 0,
+        bestBreakProbability: 0
       });
       
     } catch (error) {
@@ -673,7 +677,9 @@ export default function Home() {
       bestBreak: {
         spins: 0,
         profit: 0
-      }
+      },
+      worstBreakProbability: 0,
+      bestBreakProbability: 0
     })
     
     // Reset hit slots for "Remove Hit Slots" mode
