@@ -110,7 +110,7 @@ const HouseStats = ({ stats, simulationMode = 'normal' }: HouseStatsProps) => {
               {shortTermRisk !== undefined ? `${(shortTermRisk * 100).toFixed(1)}%` : 'N/A'}
             </span>
             <span className="text-sm text-muted-foreground mt-1">
-              Odds of negative profit after 3 breaks
+              Probability of negative profit in next break
             </span>
           </div>
         </CardContent>
