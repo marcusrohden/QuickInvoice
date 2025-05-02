@@ -39,6 +39,10 @@ interface HouseStatsType {
   }
   worstBreakProbability?: number // Probability of hitting 5 worst breaks consecutively
   bestBreakProbability?: number // Probability of hitting 5 best breaks consecutively
+  worstBreakSpinProbability?: number // Probability of hitting worst break in consecutive spins
+  bestBreakSpinProbability?: number // Probability of hitting best break in consecutive spins
+  shortTermRisk?: number // Odds of negative profit after 3 breaks
+  totalBreaks?: number // Count of complete breaks for Remove Hit Slots mode
 }
 
 interface PrizeConfig {
@@ -546,12 +550,12 @@ export default function Home() {
     let shortTermRisk = 0;
     
     // Base the risk calculation on actual data if available
-    if (totalEarnings < 0 && totalSpins > 0) {
+    if (houseStats.totalEarnings < 0 && houseStats.totalSpins > 0) {
       // We're already seeing negative earnings, so the risk is high
       // Calculate the probability based on current performance
       
       // Calculate profit per spin and percentage of spins losing money
-      const profitPerSpin = totalEarnings / totalSpins;
+      const profitPerSpin = houseStats.totalEarnings / houseStats.totalSpins;
       
       // If we're losing money per spin on average, the risk is very high
       if (profitPerSpin < 0) {
@@ -563,11 +567,11 @@ export default function Home() {
         // For heavily negative profit (close to -1x cost per spin), risk approaches 90%
         shortTermRisk = 0.4 + (lossRatio * 0.5);
       }
-    } else if (worstBreakSpins > 0 && worstBreakProfit < 0 && totalSlots > 0) {
+    } else if (houseStats.worstBreak && houseStats.worstBreak.spins > 0 && houseStats.worstBreak.profit < 0 && totalSlots > 0) {
       // If we have worst break data with negative profit, use it to estimate risk
       
       // Calculate how bad the worst break was (loss per spin)
-      const worstBreakLossPerSpin = worstBreakProfit / worstBreakSpins;
+      const worstBreakLossPerSpin = houseStats.worstBreak.profit / houseStats.worstBreak.spins;
       
       // If worst break had significant losses, increase risk
       if (worstBreakLossPerSpin < 0) {
@@ -592,19 +596,19 @@ export default function Home() {
       }
     }
     
-    if (worstBreakSpins > 0 && totalSlots > 0) {
+    if (houseStats.worstBreak && houseStats.worstBreak.spins > 0 && totalSlots > 0) {
       // Calculate probability based on the specific sequence needed
       // We need to hit exactly worstBreakSpins slots in sequence, for the number of breaks tested
-      const singleWorstBreakProbability = Math.pow(1/totalSlots, worstBreakSpins);
+      const singleWorstBreakProbability = Math.pow(1/totalSlots, houseStats.worstBreak.spins);
       
       // Probability based on consecutive breaks
       worstBreakProbability = Math.pow(singleWorstBreakProbability, breakCount);
       
       // Probability based on consecutive spins (one spin after another)
-      worstBreakSpinProbability = Math.pow(1/totalSlots, worstBreakSpins);
+      worstBreakSpinProbability = Math.pow(1/totalSlots, houseStats.worstBreak.spins);
     }
     
-    if (bestBreakSpins > 0 && totalSlots > 0) {
+    if (houseStats.bestBreak && houseStats.bestBreak.spins > 0 && totalSlots > 0) {
       // Calculate probability based on the specific sequence needed
       // We need to hit exactly bestBreakSpins slots in sequence, for the number of breaks tested
       const singleBestBreakProbability = Math.pow(1/totalSlots, bestBreakSpins);
