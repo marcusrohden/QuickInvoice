@@ -14,7 +14,8 @@ const HouseStats = ({ stats, simulationMode = 'normal' }: HouseStatsProps) => {
     bestBreak, 
     worstBreak,
     bestBreakProbability,
-    worstBreakProbability
+    worstBreakProbability,
+    shortTermRisk
   } = stats
   
   // Count total prizes from prize distribution
@@ -92,6 +93,21 @@ const HouseStats = ({ stats, simulationMode = 'normal' }: HouseStatsProps) => {
             </span>
             <span className="text-sm text-muted-foreground mt-1">
               Per spin average: {formatCurrency(totalSpins > 0 ? totalEarnings / totalSpins : 0)}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Short-Term Risk Card */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col">
+            <span className="text-sm text-muted-foreground">Short-Term Risk</span>
+            <span className={`text-2xl font-bold ${(shortTermRisk ?? 0) < 0.1 ? 'text-green-500' : (shortTermRisk ?? 0) < 0.5 ? 'text-yellow-500' : 'text-red-500'}`}>
+              {shortTermRisk !== undefined ? `${(shortTermRisk * 100).toFixed(1)}%` : 'N/A'}
+            </span>
+            <span className="text-sm text-muted-foreground mt-1">
+              Odds of negative profit after 3 breaks
             </span>
           </div>
         </CardContent>

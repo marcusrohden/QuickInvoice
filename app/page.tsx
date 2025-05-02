@@ -543,35 +543,49 @@ export default function Home() {
     let bestBreakSpinProbability = 0;
     
     // Calculate short-term risk (odds of negative profit after 3 breaks)
-    shortTermRisk = 0;
+    let shortTermRisk = 0;
     
-    // If we have worst break data and it has negative profit, use it to estimate risk
-    if (worstBreakSpins > 0 && worstBreakProfit < 0 && totalSlots > 0) {
-      // Estimate the probability of hitting a similar bad break 3 times in a row
-      // This is a simplification to give house owners an idea of short-term risk
-      // We're calculating the probability of 3 consecutive worst-case breaks
-      const worstBreakOccurrenceProbability = 0.1; // Assume 10% chance of a worst-break-like scenario
-      shortTermRisk = Math.pow(worstBreakOccurrenceProbability, 3);
+    // Base the risk calculation on actual data if available
+    if (totalEarnings < 0 && totalSpins > 0) {
+      // We're already seeing negative earnings, so the risk is high
+      // Calculate the probability based on current performance
       
-      // Adjust based on how bad the worst break is - the more negative, the higher the risk
-      // Normalize the loss against the cost per spin
-      if (costPerSpin > 0) {
-        const normalizedLoss = Math.abs(worstBreakProfit) / costPerSpin;
-        const lossAdjustment = Math.min(normalizedLoss / 10, 1); // Cap at 100%
-        shortTermRisk = Math.min(shortTermRisk + lossAdjustment * 0.4, 1); // Add up to 40% more risk
+      // Calculate profit per spin and percentage of spins losing money
+      const profitPerSpin = totalEarnings / totalSpins;
+      
+      // If we're losing money per spin on average, the risk is very high
+      if (profitPerSpin < 0) {
+        // Start with a base risk of 40% (higher than default)
+        // Adjust based on how negative the profit is - more negative = higher risk
+        const lossRatio = Math.min(Math.abs(profitPerSpin) / costPerSpin, 1);
+        
+        // Make risk higher the worse the performance is
+        // For heavily negative profit (close to -1x cost per spin), risk approaches 90%
+        shortTermRisk = 0.4 + (lossRatio * 0.5);
       }
-    } else if (prizeConfigs.length === 0) {
-      // If there are no prize configs, the risk is 0
-      shortTermRisk = 0;
+    } else if (worstBreakSpins > 0 && worstBreakProfit < 0 && totalSlots > 0) {
+      // If we have worst break data with negative profit, use it to estimate risk
+      
+      // Calculate how bad the worst break was (loss per spin)
+      const worstBreakLossPerSpin = worstBreakProfit / worstBreakSpins;
+      
+      // If worst break had significant losses, increase risk
+      if (worstBreakLossPerSpin < 0) {
+        const lossRatio = Math.min(Math.abs(worstBreakLossPerSpin) / costPerSpin, 1);
+        shortTermRisk = 0.2 + (lossRatio * 0.4); // Base 20% risk + up to 40% more based on loss severity
+      } else {
+        // Even worst break was profitable, so risk is low
+        shortTermRisk = 0.05; // 5% baseline risk
+      }
     } else {
-      // Default estimation based on prize configurations
+      // Use theoretical calculation if no actual data available
       // Calculate average prize value vs cost per spin
       const totalPrizeValue = prizeConfigs.reduce((sum, prize) => sum + prize.unitCost * prize.slots, 0) + defaultPrize * remainingSlots;
       const avgPrizeValue = totalPrizeValue / totalSlots;
       
       // If average prize is greater than cost per spin, there's higher risk of negative profit
       if (avgPrizeValue > costPerSpin) {
-        const riskRatio = Math.min(avgPrizeValue / costPerSpin, 3) / 3; // Cap at 3x cost
+        const riskRatio = Math.min(avgPrizeValue / costPerSpin, 3) / 3;
         shortTermRisk = 0.3 + (riskRatio * 0.5); // Base 30% risk + up to 50% more
       } else {
         shortTermRisk = Math.max(0.05, avgPrizeValue / costPerSpin * 0.3); // At least 5% risk
@@ -772,6 +786,24 @@ export default function Home() {
       return combinedHistory
     })
     
+    // Calculate short-term risk for this function too
+    let updatedShortTermRisk = 0;
+    
+    // Only update risk if we have enough data
+    if (houseEarnings < 0 && prev.totalSpins + spins > 20) {
+      // We're losing money overall, calculate risk based on actual performance
+      const profitPerSpin = houseEarnings / (prev.totalSpins + spins);
+      
+      if (profitPerSpin < 0) {
+        // Calculate risk proportional to loss per spin
+        const lossRatio = Math.min(Math.abs(profitPerSpin) / costPerSpin, 1);
+        updatedShortTermRisk = 0.4 + (lossRatio * 0.5); // 40-90% risk depending on loss severity
+      }
+    } else {
+      // Keep existing risk value
+      updatedShortTermRisk = prev.shortTermRisk || 0;
+    }
+    
     // Update house stats in a single update at the end
     setHouseStats(prev => ({
       totalEarnings: houseEarnings,
@@ -784,7 +816,7 @@ export default function Home() {
       bestBreakProbability: prev.bestBreakProbability,
       worstBreakSpinProbability: prev.worstBreakSpinProbability,
       bestBreakSpinProbability: prev.bestBreakSpinProbability,
-      shortTermRisk: prev.shortTermRisk,
+      shortTermRisk: updatedShortTermRisk,
       totalBreaks: prev.totalBreaks
     }))
   }
