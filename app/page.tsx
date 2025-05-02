@@ -1027,14 +1027,6 @@ export default function Home() {
                                 'N/A'}
                             </span>
                           </div>
-                          <div className="stat-sublabel flex justify-between">
-                            <span>Odds:</span>
-                            <span>
-                              {houseStats.bestBreakProbability && houseStats.bestBreakProbability > 0 ? 
-                                `1 in ${Math.round(1 / houseStats.bestBreakProbability).toLocaleString()}` : 
-                                'N/A'}
-                            </span>
-                          </div>
                         </div>
 
                         <div>
@@ -1065,14 +1057,6 @@ export default function Home() {
                                 (houseStats.worstBreakProbability * 100 < 0.01 ? 
                                   '<0.01%' : 
                                   (houseStats.worstBreakProbability * 100).toFixed(2) + '%') : 
-                                'N/A'}
-                            </span>
-                          </div>
-                          <div className="stat-sublabel flex justify-between">
-                            <span>Odds:</span>
-                            <span>
-                              {houseStats.worstBreakProbability && houseStats.worstBreakProbability > 0 ? 
-                                `1 in ${Math.round(1 / houseStats.worstBreakProbability).toLocaleString()}` : 
                                 'N/A'}
                             </span>
                           </div>
