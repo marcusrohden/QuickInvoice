@@ -93,6 +93,7 @@ export default function Home() {
     totalEarnings: 0,
     totalSpins: 0,
     totalBreaks: 0,
+    shortTermRisk: 0,
     prizeDistribution: {}, // Initialize empty object for prize distribution counts
     worstBreak: {
       spins: 0,
@@ -155,6 +156,7 @@ export default function Home() {
         totalEarnings: 0,
         totalSpins: 0,
         totalBreaks: 0,
+        shortTermRisk: 0,
         prizeDistribution: {},
         worstBreak: {
           spins: 0,
@@ -541,7 +543,7 @@ export default function Home() {
     let bestBreakSpinProbability = 0;
     
     // Calculate short-term risk (odds of negative profit after 3 breaks)
-    let shortTermRisk = 0;
+    shortTermRisk = 0;
     
     // If we have worst break data and it has negative profit, use it to estimate risk
     if (worstBreakSpins > 0 && worstBreakProfit < 0 && totalSlots > 0) {
@@ -598,6 +600,13 @@ export default function Home() {
       
       // Probability based on consecutive spins (one spin after another)
       bestBreakSpinProbability = Math.pow(1/totalSlots, bestBreakSpins);
+    }
+    
+    // Update the short-term risk calculation if needed
+    if (breakCount > 0 && worstBreakProfit < 0 && shortTermRisk === 0) {
+      // Estimate probability based on worst break
+      const estimatedNegativeFrequency = 0.3; // Example: 30% chance of a negative break
+      shortTermRisk = Math.pow(estimatedNegativeFrequency, 3); // Probability of 3 consecutive negative breaks
     }
     
     // Update house stats in a single update at the end
