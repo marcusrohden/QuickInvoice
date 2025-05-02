@@ -979,7 +979,12 @@ export default function Home() {
                 <div className="stat-card">
                   <div className="stat-content">
                     <span className="stat-label">Total Spins</span>
-                    <span className="stat-value">{houseStats.totalSpins}</span>
+                    <span className="stat-value">{houseStats.totalSpins.toLocaleString()}</span>
+                    {simulationMode === 'removeHitSlots' && houseStats.totalBreaks ? (
+                      <div className="stat-sublabel">
+                        Total Breaks: {houseStats.totalBreaks.toLocaleString()}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
                 
@@ -1042,7 +1047,7 @@ export default function Home() {
                             </span>
                           </div>
                           <div className="stat-sublabel flex justify-between">
-                            <span>Consecutive Probability:</span>
+                            <span>Break Probability:</span>
                             <span className={
                               houseStats.bestBreakProbability && houseStats.bestBreakProbability > 0 ?
                                 (houseStats.bestBreakProbability * 100 >= 10 ? 'profit' : 'text-gray-500') :
@@ -1052,6 +1057,20 @@ export default function Home() {
                                 (houseStats.bestBreakProbability * 100 < 0.01 ? 
                                   '<0.01%' : 
                                   (houseStats.bestBreakProbability * 100).toFixed(2) + '%') : 
+                                'N/A'}
+                            </span>
+                          </div>
+                          <div className="stat-sublabel flex justify-between">
+                            <span>Spin Probability:</span>
+                            <span className={
+                              houseStats.bestBreakSpinProbability && houseStats.bestBreakSpinProbability > 0 ?
+                                (houseStats.bestBreakSpinProbability * 100 >= 10 ? 'profit' : 'text-gray-500') :
+                                ''
+                            }>
+                              {houseStats.bestBreakSpinProbability && houseStats.bestBreakSpinProbability > 0 ? 
+                                (houseStats.bestBreakSpinProbability * 100 < 0.01 ? 
+                                  '<0.01%' : 
+                                  (houseStats.bestBreakSpinProbability * 100).toFixed(2) + '%') : 
                                 'N/A'}
                             </span>
                           </div>
@@ -1079,7 +1098,7 @@ export default function Home() {
                             </span>
                           </div>
                           <div className="stat-sublabel flex justify-between">
-                            <span>Consecutive Probability:</span>
+                            <span>Break Probability:</span>
                             <span className={
                               houseStats.worstBreakProbability && houseStats.worstBreakProbability > 0 ?
                                 (houseStats.worstBreakProbability * 100 >= 50 ? 'loss' : 
@@ -1090,6 +1109,21 @@ export default function Home() {
                                 (houseStats.worstBreakProbability * 100 < 0.01 ? 
                                   '<0.01%' : 
                                   (houseStats.worstBreakProbability * 100).toFixed(2) + '%') : 
+                                'N/A'}
+                            </span>
+                          </div>
+                          <div className="stat-sublabel flex justify-between">
+                            <span>Spin Probability:</span>
+                            <span className={
+                              houseStats.worstBreakSpinProbability && houseStats.worstBreakSpinProbability > 0 ?
+                                (houseStats.worstBreakSpinProbability * 100 >= 50 ? 'loss' : 
+                                 houseStats.worstBreakSpinProbability * 100 >= 10 ? 'text-yellow-500' : 'profit') :
+                                ''
+                            }>
+                              {houseStats.worstBreakSpinProbability && houseStats.worstBreakSpinProbability > 0 ? 
+                                (houseStats.worstBreakSpinProbability * 100 < 0.01 ? 
+                                  '<0.01%' : 
+                                  (houseStats.worstBreakSpinProbability * 100).toFixed(2) + '%') : 
                                 'N/A'}
                             </span>
                           </div>
