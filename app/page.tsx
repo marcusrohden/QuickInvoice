@@ -1017,6 +1017,24 @@ export default function Home() {
                                 'N/A'}
                             </span>
                           </div>
+                          <div className="stat-sublabel flex justify-between">
+                            <span>5x Consecutive Probability:</span>
+                            <span>
+                              {houseStats.bestBreakProbability && houseStats.bestBreakProbability > 0 ? 
+                                (houseStats.bestBreakProbability < 0.0000001 ? 
+                                  houseStats.bestBreakProbability.toExponential(6) : 
+                                  (houseStats.bestBreakProbability * 100).toFixed(6) + '%') : 
+                                'N/A'}
+                            </span>
+                          </div>
+                          <div className="stat-sublabel flex justify-between">
+                            <span>Odds:</span>
+                            <span>
+                              {houseStats.bestBreakProbability && houseStats.bestBreakProbability > 0 ? 
+                                `1 in ${Math.round(1 / houseStats.bestBreakProbability).toLocaleString()}` : 
+                                'N/A'}
+                            </span>
+                          </div>
                         </div>
 
                         <div>
@@ -1037,6 +1055,24 @@ export default function Home() {
                             <span className="loss">
                               {houseStats.worstBreak?.spins ? 
                                 `${formatCurrency(houseStats.worstBreak.profit / houseStats.worstBreak.spins)}` : 
+                                'N/A'}
+                            </span>
+                          </div>
+                          <div className="stat-sublabel flex justify-between">
+                            <span>5x Consecutive Probability:</span>
+                            <span>
+                              {houseStats.worstBreakProbability && houseStats.worstBreakProbability > 0 ? 
+                                (houseStats.worstBreakProbability < 0.0000001 ? 
+                                  houseStats.worstBreakProbability.toExponential(6) : 
+                                  (houseStats.worstBreakProbability * 100).toFixed(6) + '%') : 
+                                'N/A'}
+                            </span>
+                          </div>
+                          <div className="stat-sublabel flex justify-between">
+                            <span>Odds:</span>
+                            <span>
+                              {houseStats.worstBreakProbability && houseStats.worstBreakProbability > 0 ? 
+                                `1 in ${Math.round(1 / houseStats.worstBreakProbability).toLocaleString()}` : 
                                 'N/A'}
                             </span>
                           </div>
