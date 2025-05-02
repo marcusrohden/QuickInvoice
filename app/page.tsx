@@ -142,7 +142,8 @@ export default function Home() {
           id: `prize${index + 1}`,
           name: prize.name || `Prize ${index + 1}`,
           unitCost: prize.unitCost || prize.value || 0, // support both new and old format
-          slots: prize.slots || 0
+          slots: prize.slots || 0,
+          stopWhenHit: prize.stopWhenHit !== undefined ? prize.stopWhenHit : true // Default to true if not specified
         })));
       }
       
