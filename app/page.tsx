@@ -46,6 +46,7 @@ interface PrizeConfig {
   name: string
   unitCost: number // renamed from value to be more descriptive
   slots: number
+  stopWhenHit: boolean // Whether to stop the break when all instances of this prize are hit
 }
 
 export default function Home() {
@@ -60,8 +61,8 @@ export default function Home() {
   
   // Prize configurations with their quantity and unit cost
   const [prizeConfigs, setPrizeConfigs] = useState<PrizeConfig[]>([
-    { id: "prize1", name: "Prize X", unitCost: 50, slots: 1 },
-    { id: "prize2", name: "Prize Z", unitCost: 30, slots: 3 }
+    { id: "prize1", name: "Prize X", unitCost: 50, slots: 1, stopWhenHit: true },
+    { id: "prize2", name: "Prize Z", unitCost: 30, slots: 3, stopWhenHit: true }
   ])
   
   // Calculate remaining slots after special prizes
@@ -247,7 +248,8 @@ export default function Home() {
       id: `prize${prizeConfigs.length + 1}`,
       name: newPrizeName,
       unitCost: newPrizeValue,
-      slots: newPrizeSlots
+      slots: newPrizeSlots,
+      stopWhenHit: true // Default to true, can be toggled later in UI
     }
     
     setPrizeConfigs([...prizeConfigs, newPrize])
@@ -381,8 +383,13 @@ export default function Home() {
       currentBreakProfit = 0;
       currentBreakSpins = 0;
       
-      // Continue until all special prize slots are hit in this break
-      while (remainingPrizeSlots > 0) {
+      // Create a list of prize slots that need to be hit (only those with stopWhenHit=true)
+      let requiredPrizeConfig: PrizeConfig[] = prizeConfigs.filter(prize => prize.stopWhenHit);
+      let requiredPrizeSlots = requiredPrizeConfig.reduce((total, prize) => total + prize.slots, 0);
+      let remainingRequiredSlots = requiredPrizeSlots;
+      
+      // Continue until all required prize slots (those with stopWhenHit=true) are hit in this break
+      while (remainingRequiredSlots > 0) {
         breakSpinCount++;
         
         // Get a valid slot (not already hit in this break cycle)
@@ -443,6 +450,14 @@ export default function Home() {
         if (hitResult.isSpecialPrize) {
           remainingPrizeSlots--;
           totalPrizesRemoved++;
+          
+          // If this is a required prize (stopWhenHit=true), decrement the counter
+          if (hitResult.prizeIndex !== undefined) {
+            const hitPrize = prizeConfigs[hitResult.prizeIndex];
+            if (hitPrize && hitPrize.stopWhenHit) {
+              remainingRequiredSlots--;
+            }
+          }
         }
       }
       
@@ -855,6 +870,12 @@ export default function Home() {
                         <th>Quantity</th>
                         <th>Unit Cost</th>
                         <th>Total</th>
+                        {simulationMode === 'removeHitSlots' && (
+                          <th>
+                            Stop When Hit
+                            <span className="tooltip" title="When checked, the break will only complete when all prizes with this option checked are hit. Unchecked prizes are treated like default slots.">ⓘ</span>
+                          </th>
+                        )}
                         <th></th>
                       </tr>
                     </thead>
@@ -865,6 +886,25 @@ export default function Home() {
                           <td>{prize.slots} slot{prize.slots !== 1 ? 's' : ''}</td>
                           <td>{formatCurrency(prize.unitCost)}</td>
                           <td>{formatCurrency(prize.unitCost * prize.slots)}</td>
+                          {simulationMode === 'removeHitSlots' && (
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={prize.stopWhenHit}
+                                onChange={() => {
+                                  const updatedConfigs = [...prizeConfigs];
+                                  const index = updatedConfigs.findIndex(p => p.id === prize.id);
+                                  if (index !== -1) {
+                                    updatedConfigs[index] = {
+                                      ...updatedConfigs[index],
+                                      stopWhenHit: !updatedConfigs[index].stopWhenHit
+                                    };
+                                    setPrizeConfigs(updatedConfigs);
+                                  }
+                                }}
+                              />
+                            </td>
+                          )}
                           <td>
                             <button 
                               className="button-small button-danger"
@@ -880,6 +920,9 @@ export default function Home() {
                         <td>{remainingSlots} slot{remainingSlots !== 1 ? 's' : ''}</td>
                         <td>{formatCurrency(defaultPrize)}</td>
                         <td>{formatCurrency(defaultPrize * remainingSlots)}</td>
+                        {simulationMode === 'removeHitSlots' && (
+                          <td>N/A</td>
+                        )}
                         <td></td>
                       </tr>
                     </tbody>
