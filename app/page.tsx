@@ -791,6 +791,15 @@ export default function Home() {
             Remove Hit Slots
           </div>
         </div>
+        
+        {simulationMode === 'removeHitSlots' && (
+          <div className="mode-description">
+            <p>
+              <strong>Remove Hit Slots Mode:</strong> A "break" continues until all prizes marked with "Stop When Hit" are hit. 
+              Prizes without this option checked are treated like default slots.
+            </p>
+          </div>
+        )}
       
         <div className="grid">
           <div className="card">
