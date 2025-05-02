@@ -486,6 +486,28 @@ export default function Home() {
       return combinedHistory;
     });
     
+    // Calculate probability of hitting 5 consecutive worst breaks or best breaks
+    // This is calculated as (1/totalSlots)^(worstBreakSpins * 5) for worst break probability
+    // and (1/totalSlots)^(bestBreakSpins * 5) for best break probability
+    
+    // The probability of hitting the exact same sequence of slots in 5 consecutive breaks
+    let worstBreakProbability = 0;
+    let bestBreakProbability = 0;
+    
+    if (worstBreakSpins > 0 && totalSlots > 0) {
+      // Calculate probability based on the specific sequence needed
+      // We need to hit exactly worstBreakSpins slots in sequence, 5 times in a row
+      const singleWorstBreakProbability = Math.pow(1/totalSlots, worstBreakSpins);
+      worstBreakProbability = Math.pow(singleWorstBreakProbability, 5);
+    }
+    
+    if (bestBreakSpins > 0 && totalSlots > 0) {
+      // Calculate probability based on the specific sequence needed
+      // We need to hit exactly bestBreakSpins slots in sequence, 5 times in a row
+      const singleBestBreakProbability = Math.pow(1/totalSlots, bestBreakSpins);
+      bestBreakProbability = Math.pow(singleBestBreakProbability, 5);
+    }
+    
     // Update house stats in a single update at the end
     setHouseStats(prev => ({
       totalEarnings: houseEarnings,
@@ -498,7 +520,9 @@ export default function Home() {
       bestBreak: {
         spins: bestBreakSpins,
         profit: bestBreakProfit
-      }
+      },
+      worstBreakProbability,
+      bestBreakProbability
     }));
   }
   
