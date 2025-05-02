@@ -786,25 +786,25 @@ export default function Home() {
       return combinedHistory
     })
     
-    // Calculate short-term risk for this function too
-    let updatedShortTermRisk = 0;
+    // Calculate short-term risk based on updated data
+    const totalSpinsCount = houseStats.totalSpins + spins
+    let updatedShortTermRisk = houseStats.shortTermRisk || 0
     
-    // Only update risk if we have enough data
-    if (houseEarnings < 0 && prev.totalSpins + spins > 20) {
-      // We're losing money overall, calculate risk based on actual performance
-      const profitPerSpin = houseEarnings / (prev.totalSpins + spins);
+    // If we're losing money overall, adjust the risk level
+    if (houseEarnings < 0 && totalSpinsCount > 0) {
+      const profitPerSpin = houseEarnings / totalSpinsCount
       
       if (profitPerSpin < 0) {
-        // Calculate risk proportional to loss per spin
-        const lossRatio = Math.min(Math.abs(profitPerSpin) / costPerSpin, 1);
-        updatedShortTermRisk = 0.4 + (lossRatio * 0.5); // 40-90% risk depending on loss severity
+        // Loss ratio represents how much we're losing compared to the cost per spin
+        // Higher loss ratio means higher risk
+        const lossRatio = Math.min(Math.abs(profitPerSpin) / costPerSpin, 1)
+        
+        // Start with a base risk of 40%, plus up to 50% more based on loss severity
+        updatedShortTermRisk = 0.4 + (lossRatio * 0.5)
       }
-    } else {
-      // Keep existing risk value
-      updatedShortTermRisk = prev.shortTermRisk || 0;
     }
     
-    // Update house stats in a single update at the end
+    // Update house stats
     setHouseStats(prev => ({
       totalEarnings: houseEarnings,
       totalSpins: prev.totalSpins + spins,
