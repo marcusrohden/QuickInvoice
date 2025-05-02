@@ -611,17 +611,17 @@ export default function Home() {
     if (houseStats.bestBreak && houseStats.bestBreak.spins > 0 && totalSlots > 0) {
       // Calculate probability based on the specific sequence needed
       // We need to hit exactly bestBreakSpins slots in sequence, for the number of breaks tested
-      const singleBestBreakProbability = Math.pow(1/totalSlots, bestBreakSpins);
+      const singleBestBreakProbability = Math.pow(1/totalSlots, houseStats.bestBreak.spins);
       
       // Probability based on consecutive breaks
       bestBreakProbability = Math.pow(singleBestBreakProbability, breakCount);
       
       // Probability based on consecutive spins (one spin after another)
-      bestBreakSpinProbability = Math.pow(1/totalSlots, bestBreakSpins);
+      bestBreakSpinProbability = Math.pow(1/totalSlots, houseStats.bestBreak.spins);
     }
     
     // Update the short-term risk calculation if needed
-    if (breakCount > 0 && worstBreakProfit < 0 && shortTermRisk === 0) {
+    if (breakCount > 0 && houseStats.worstBreak && houseStats.worstBreak.profit < 0 && shortTermRisk === 0) {
       // Estimate probability based on worst break
       const estimatedNegativeFrequency = 0.3; // Example: 30% chance of a negative break
       shortTermRisk = Math.pow(estimatedNegativeFrequency, 3); // Probability of 3 consecutive negative breaks

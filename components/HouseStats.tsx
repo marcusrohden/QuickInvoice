@@ -15,7 +15,10 @@ const HouseStats = ({ stats, simulationMode = 'normal' }: HouseStatsProps) => {
     worstBreak,
     bestBreakProbability,
     worstBreakProbability,
-    shortTermRisk
+    bestBreakSpinProbability,
+    worstBreakSpinProbability,
+    shortTermRisk,
+    totalBreaks
   } = stats
   
   // Count total prizes from prize distribution
@@ -139,12 +142,22 @@ const HouseStats = ({ stats, simulationMode = 'normal' }: HouseStatsProps) => {
                     </span>
                   </div>
                   <div className="text-sm flex justify-between">
-                    <span>5x Consecutive Probability:</span>
+                    <span>Break Sequence Probability:</span>
                     <span>{formatProbability(bestBreakProbability)}</span>
                   </div>
                   <div className="text-sm flex justify-between">
-                    <span>Odds:</span>
+                    <span>Odds (Break):</span>
                     <span>{formatProbabilityAsOdds(bestBreakProbability)}</span>
+                  </div>
+                  <div className="text-sm flex justify-between">
+                    <span>Spin Sequence Probability:</span>
+                    <span className={`${(bestBreakSpinProbability ?? 0) >= 0.1 ? 'text-green-500' : 'text-gray-500'}`}>
+                      {formatProbability(bestBreakSpinProbability)}
+                    </span>
+                  </div>
+                  <div className="text-sm flex justify-between">
+                    <span>Odds (Spin):</span>
+                    <span>{formatProbabilityAsOdds(bestBreakSpinProbability)}</span>
                   </div>
                 </div>
                 
@@ -167,12 +180,22 @@ const HouseStats = ({ stats, simulationMode = 'normal' }: HouseStatsProps) => {
                     </span>
                   </div>
                   <div className="text-sm flex justify-between">
-                    <span>5x Consecutive Probability:</span>
+                    <span>Break Sequence Probability:</span>
                     <span>{formatProbability(worstBreakProbability)}</span>
                   </div>
                   <div className="text-sm flex justify-between">
-                    <span>Odds:</span>
+                    <span>Odds (Break):</span>
                     <span>{formatProbabilityAsOdds(worstBreakProbability)}</span>
+                  </div>
+                  <div className="text-sm flex justify-between">
+                    <span>Spin Sequence Probability:</span>
+                    <span className={`${(worstBreakSpinProbability ?? 0) < 0.1 ? 'text-green-500' : (worstBreakSpinProbability ?? 0) < 0.5 ? 'text-yellow-500' : 'text-red-500'}`}>
+                      {formatProbability(worstBreakSpinProbability)}
+                    </span>
+                  </div>
+                  <div className="text-sm flex justify-between">
+                    <span>Odds (Spin):</span>
+                    <span>{formatProbabilityAsOdds(worstBreakSpinProbability)}</span>
                   </div>
                 </div>
               </div>
