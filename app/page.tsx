@@ -1019,7 +1019,11 @@ export default function Home() {
                           </div>
                           <div className="stat-sublabel flex justify-between">
                             <span>5x Consecutive Probability:</span>
-                            <span>
+                            <span className={
+                              houseStats.bestBreakProbability && houseStats.bestBreakProbability > 0 ?
+                                (houseStats.bestBreakProbability * 100 >= 10 ? 'profit' : 'text-gray-500') :
+                                ''
+                            }>
                               {houseStats.bestBreakProbability && houseStats.bestBreakProbability > 0 ? 
                                 (houseStats.bestBreakProbability * 100 < 0.01 ? 
                                   '<0.01%' : 
@@ -1052,7 +1056,12 @@ export default function Home() {
                           </div>
                           <div className="stat-sublabel flex justify-between">
                             <span>5x Consecutive Probability:</span>
-                            <span>
+                            <span className={
+                              houseStats.worstBreakProbability && houseStats.worstBreakProbability > 0 ?
+                                (houseStats.worstBreakProbability * 100 >= 50 ? 'loss' : 
+                                 houseStats.worstBreakProbability * 100 >= 10 ? 'text-yellow-500' : 'profit') :
+                                ''
+                            }>
                               {houseStats.worstBreakProbability && houseStats.worstBreakProbability > 0 ? 
                                 (houseStats.worstBreakProbability * 100 < 0.01 ? 
                                   '<0.01%' : 
