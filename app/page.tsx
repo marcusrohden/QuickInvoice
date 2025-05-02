@@ -540,6 +540,42 @@ export default function Home() {
     let worstBreakSpinProbability = 0;
     let bestBreakSpinProbability = 0;
     
+    // Calculate short-term risk (odds of negative profit after 3 breaks)
+    let shortTermRisk = 0;
+    
+    // If we have worst break data and it has negative profit, use it to estimate risk
+    if (worstBreakSpins > 0 && worstBreakProfit < 0 && totalSlots > 0) {
+      // Estimate the probability of hitting a similar bad break 3 times in a row
+      // This is a simplification to give house owners an idea of short-term risk
+      // We're calculating the probability of 3 consecutive worst-case breaks
+      const worstBreakOccurrenceProbability = 0.1; // Assume 10% chance of a worst-break-like scenario
+      shortTermRisk = Math.pow(worstBreakOccurrenceProbability, 3);
+      
+      // Adjust based on how bad the worst break is - the more negative, the higher the risk
+      // Normalize the loss against the cost per spin
+      if (costPerSpin > 0) {
+        const normalizedLoss = Math.abs(worstBreakProfit) / costPerSpin;
+        const lossAdjustment = Math.min(normalizedLoss / 10, 1); // Cap at 100%
+        shortTermRisk = Math.min(shortTermRisk + lossAdjustment * 0.4, 1); // Add up to 40% more risk
+      }
+    } else if (prizeConfigs.length === 0) {
+      // If there are no prize configs, the risk is 0
+      shortTermRisk = 0;
+    } else {
+      // Default estimation based on prize configurations
+      // Calculate average prize value vs cost per spin
+      const totalPrizeValue = prizeConfigs.reduce((sum, prize) => sum + prize.unitCost * prize.slots, 0) + defaultPrize * remainingSlots;
+      const avgPrizeValue = totalPrizeValue / totalSlots;
+      
+      // If average prize is greater than cost per spin, there's higher risk of negative profit
+      if (avgPrizeValue > costPerSpin) {
+        const riskRatio = Math.min(avgPrizeValue / costPerSpin, 3) / 3; // Cap at 3x cost
+        shortTermRisk = 0.3 + (riskRatio * 0.5); // Base 30% risk + up to 50% more
+      } else {
+        shortTermRisk = Math.max(0.05, avgPrizeValue / costPerSpin * 0.3); // At least 5% risk
+      }
+    }
+    
     if (worstBreakSpins > 0 && totalSlots > 0) {
       // Calculate probability based on the specific sequence needed
       // We need to hit exactly worstBreakSpins slots in sequence, for the number of breaks tested
@@ -570,6 +606,7 @@ export default function Home() {
       totalSpins: prev.totalSpins + history.length,
       totalBreaks: (prev.totalBreaks || 0) + breakCount,
       prizeDistribution: housePrizeDistribution,
+      shortTermRisk,
       worstBreak: {
         spins: worstBreakSpins,
         profit: worstBreakProfit
@@ -630,6 +667,7 @@ export default function Home() {
         bestBreakProbability: prev.bestBreakProbability,
         worstBreakSpinProbability: prev.worstBreakSpinProbability,
         bestBreakSpinProbability: prev.bestBreakSpinProbability,
+        shortTermRisk: prev.shortTermRisk,
         totalBreaks: prev.totalBreaks
       }
     })
@@ -737,6 +775,7 @@ export default function Home() {
       bestBreakProbability: prev.bestBreakProbability,
       worstBreakSpinProbability: prev.worstBreakSpinProbability,
       bestBreakSpinProbability: prev.bestBreakSpinProbability,
+      shortTermRisk: prev.shortTermRisk,
       totalBreaks: prev.totalBreaks
     }))
   }
@@ -748,6 +787,7 @@ export default function Home() {
       totalEarnings: 0,
       totalSpins: 0,
       totalBreaks: 0,
+      shortTermRisk: 0,
       prizeDistribution: {},
       worstBreak: {
         spins: 0,
@@ -1119,6 +1159,21 @@ export default function Home() {
                   </div>
                 </div>
                 
+                <div className="stat-card">
+                  <div className="stat-content">
+                    <span className="stat-label">Short-Term Risk</span>
+                    <span className={`stat-value ${houseStats.shortTermRisk && houseStats.shortTermRisk > 0.5 ? 'loss' : 
+                                                    houseStats.shortTermRisk && houseStats.shortTermRisk > 0.25 ? 'text-yellow-500' : 'profit'}`}>
+                      {houseStats.shortTermRisk !== undefined ? 
+                        `${(houseStats.shortTermRisk * 100).toFixed(1)}%` : 
+                        'N/A'}
+                    </span>
+                    <div className="stat-sublabel">
+                      Odds of negative profit after 3 breaks
+                    </div>
+                  </div>
+                </div>
+
                 <div className="stat-card">
                   <div className="stat-content">
                     <span className="stat-label">Prize Distribution</span>

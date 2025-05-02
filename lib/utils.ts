@@ -33,6 +33,7 @@ export interface HouseStatsType {
   totalBreaks?: number // Count of complete breaks for Remove Hit Slots mode
   nonTargetPrizes?: number
   targetPrizes?: number
+  shortTermRisk?: number // Odds of negative profit after 3 breaks
   prizeDistribution: Record<string, number> // Count of each prize type hit
   worstBreak?: {
     spins: number
