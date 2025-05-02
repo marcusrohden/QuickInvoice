@@ -37,6 +37,8 @@ interface HouseStatsType {
     spins: number
     profit: number
   }
+  worstBreakProbability?: number // Probability of hitting 5 worst breaks consecutively
+  bestBreakProbability?: number // Probability of hitting 5 best breaks consecutively
 }
 
 interface PrizeConfig {
