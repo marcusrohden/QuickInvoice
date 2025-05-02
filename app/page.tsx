@@ -490,26 +490,26 @@ export default function Home() {
       return combinedHistory;
     });
     
-    // Calculate probability of hitting 5 consecutive worst breaks or best breaks
-    // This is calculated as (1/totalSlots)^(worstBreakSpins * 5) for worst break probability
-    // and (1/totalSlots)^(bestBreakSpins * 5) for best break probability
+    // Calculate probability of hitting consecutive worst breaks or best breaks based on the number of breaks tested
+    // This is calculated as (1/totalSlots)^(worstBreakSpins * breakCount) for worst break probability
+    // and (1/totalSlots)^(bestBreakSpins * breakCount) for best break probability
     
-    // The probability of hitting the exact same sequence of slots in 5 consecutive breaks
+    // The probability of hitting the exact same sequence of slots in consecutive breaks
     let worstBreakProbability = 0;
     let bestBreakProbability = 0;
     
     if (worstBreakSpins > 0 && totalSlots > 0) {
       // Calculate probability based on the specific sequence needed
-      // We need to hit exactly worstBreakSpins slots in sequence, 5 times in a row
+      // We need to hit exactly worstBreakSpins slots in sequence, for the number of breaks tested
       const singleWorstBreakProbability = Math.pow(1/totalSlots, worstBreakSpins);
-      worstBreakProbability = Math.pow(singleWorstBreakProbability, 5);
+      worstBreakProbability = Math.pow(singleWorstBreakProbability, breakCount);
     }
     
     if (bestBreakSpins > 0 && totalSlots > 0) {
       // Calculate probability based on the specific sequence needed
-      // We need to hit exactly bestBreakSpins slots in sequence, 5 times in a row
+      // We need to hit exactly bestBreakSpins slots in sequence, for the number of breaks tested
       const singleBestBreakProbability = Math.pow(1/totalSlots, bestBreakSpins);
-      bestBreakProbability = Math.pow(singleBestBreakProbability, 5);
+      bestBreakProbability = Math.pow(singleBestBreakProbability, breakCount);
     }
     
     // Update house stats in a single update at the end
@@ -1018,7 +1018,7 @@ export default function Home() {
                             </span>
                           </div>
                           <div className="stat-sublabel flex justify-between">
-                            <span>5x Consecutive Probability:</span>
+                            <span>Consecutive Probability:</span>
                             <span className={
                               houseStats.bestBreakProbability && houseStats.bestBreakProbability > 0 ?
                                 (houseStats.bestBreakProbability * 100 >= 10 ? 'profit' : 'text-gray-500') :
@@ -1055,7 +1055,7 @@ export default function Home() {
                             </span>
                           </div>
                           <div className="stat-sublabel flex justify-between">
-                            <span>5x Consecutive Probability:</span>
+                            <span>Consecutive Probability:</span>
                             <span className={
                               houseStats.worstBreakProbability && houseStats.worstBreakProbability > 0 ?
                                 (houseStats.worstBreakProbability * 100 >= 50 ? 'loss' : 
