@@ -212,7 +212,7 @@ export function calculateShortTermRisk(
     }
     
     // Apply commission fee to the expected break cost
-    expectedBreakCost = expectedBreakCost * (1 - commissionFee / 100);
+    expectedBreakCost = expectedBreakCost * (1 - (commissionFee / 100));
     
     // If break is profitable on average, no risk
     if (expectedBreakCost <= 0) return 0;

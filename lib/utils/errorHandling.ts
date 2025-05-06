@@ -74,3 +74,36 @@ export function isErrorResponse(result: unknown): result is ErrorResponse {
     'message' in result
   );
 }
+
+/**
+ * Error with status code for API responses
+ */
+export class HttpError extends Error {
+  statusCode: number;
+  
+  constructor(message: string, statusCode: number = 500) {
+    super(message);
+    this.statusCode = statusCode;
+    this.name = 'HttpError';
+  }
+}
+
+/**
+ * Error for validation failures
+ */
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+/**
+ * Error for business logic failures
+ */
+export class BusinessError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'BusinessError';
+  }
+}

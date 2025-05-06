@@ -3,6 +3,8 @@
  * Functions for validating user inputs
  */
 
+import { PrizeConfig } from '../types/simulation';
+
 /**
  * Validate that a number is positive
  * @param value - The value to validate
@@ -51,4 +53,43 @@ export function validateSlots(slots: number, availableSlots: number): void {
   if (slots > availableSlots) {
     throw new Error(`Cannot allocate more than ${availableSlots} slots`);
   }
+}
+
+/**
+ * Validate a prize configuration
+ * @param config - The prize configuration to validate
+ * @throws Error if validation fails
+ */
+export function validatePrizeConfig(config: PrizeConfig): void {
+  validateNotEmpty(config.name, 'Prize name');
+  validatePositiveNumber(config.unitCost, 'Prize value');
+  validatePositiveNumber(config.slots, 'Number of slots');
+}
+
+/**
+ * Validate total slots
+ * @param totalSlots - Total number of slots
+ * @throws Error if validation fails
+ */
+export function validateTotalSlots(totalSlots: number): void {
+  validatePositiveNumber(totalSlots, 'Total slots');
+  validateNumberInRange(totalSlots, 1, 1000, 'Total slots'); // Reasonable upper limit
+}
+
+/**
+ * Validate cost per spin
+ * @param costPerSpin - Cost per spin
+ * @throws Error if validation fails
+ */
+export function validateCostPerSpin(costPerSpin: number): void {
+  validatePositiveNumber(costPerSpin, 'Cost per spin');
+}
+
+/**
+ * Validate commission fee percentage
+ * @param commissionFee - Commission fee percentage
+ * @throws Error if validation fails
+ */
+export function validateCommissionFee(commissionFee: number): void {
+  validateNumberInRange(commissionFee, 0, 100, 'Commission fee');
 }

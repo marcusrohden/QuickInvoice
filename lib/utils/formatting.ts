@@ -46,3 +46,43 @@ export function formatProbabilityAsOdds(probability: number | undefined): string
 export function formatLargeNumber(value: number): string {
   return value.toLocaleString();
 }
+
+/**
+ * Format a percentage value
+ * @param value - The value to format as a percentage (0-100)
+ * @param decimalPlaces - Number of decimal places to show
+ * @returns Formatted percentage string
+ */
+export function formatPercentage(value: number, decimalPlaces: number = 1): string {
+  return `${value.toFixed(decimalPlaces)}%`;
+}
+
+/**
+ * Format a date string
+ * @param date - Date to format
+ * @returns Formatted date string
+ */
+export function formatDate(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+/**
+ * Format a timestamp
+ * @param date - Date to format
+ * @returns Formatted timestamp string
+ */
+export function formatTimestamp(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
