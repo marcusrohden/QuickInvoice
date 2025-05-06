@@ -1,134 +1,147 @@
 /**
  * Configuration Service
- * Handles loading and saving simulation configurations
+ * Handles saving and loading configurations
  */
 
 import { PrizeConfig } from '../types/simulation';
+import { tryCatch, isErrorResponse } from '../utils/errorHandling';
 
 /**
- * Load a configuration from the API
- * @param id - The ID of the configuration to load
- * @returns The loaded configuration, or null if an error occurred
+ * Configuration data structure
  */
-export async function loadConfiguration(id: number): Promise<{
+export interface Configuration {
+  id?: number;
+  name: string;
+  description: string;
   totalSlots: number;
   pricePerSpin: number;
   defaultPrize: number;
   prizeConfigs: PrizeConfig[];
-} | null> {
-  try {
-    const response = await fetch(`/api/configurations/${id}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to load configuration: ${response.status}`);
-    }
-    
-    const config = await response.json();
-    
-    // Convert prize configs to our format
-    const formattedPrizeConfigs = Array.isArray(config.prizeConfigs) 
-      ? config.prizeConfigs.map((prize: any, index: number) => ({
-          id: prize.id || `prize_${Date.now()}_${index}`, // Use existing ID or generate a unique one
-          name: prize.name || `Prize ${index + 1}`,
-          unitCost: prize.unitCost || prize.value || 0, // support both new and old format
-          slots: prize.slots || 0,
-          stopWhenHit: prize.stopWhenHit !== undefined ? prize.stopWhenHit : true // Default to true if not specified
-        }))
-      : [];
-    
-    return {
-      totalSlots: config.totalSlots,
-      pricePerSpin: config.pricePerSpin,
-      defaultPrize: config.defaultPrize,
-      prizeConfigs: formattedPrizeConfigs
-    };
-  } catch (error) {
-    console.error('Error loading configuration:', error);
-    return null;
-  }
+  isPublic: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**
- * Save a configuration to the API
- * @param config - The configuration to save
- * @param name - Optional name for the configuration
- * @param description - Optional description for the configuration
- * @param isPublic - Whether the configuration should be public
- * @returns The ID of the saved configuration, or null if an error occurred
+ * Save a configuration to the database
+ * @param config - Configuration data to save
+ * @returns Saved configuration with ID
  */
-export async function saveConfiguration(
-  config: {
-    totalSlots: number;
-    pricePerSpin: number;
-    defaultPrize: number;
-    prizeConfigs: PrizeConfig[];
-  },
-  name: string,
-  description: string = '',
-  isPublic: boolean = false
-): Promise<number | null> {
-  try {
+export async function saveConfiguration(config: Configuration): Promise<Configuration> {
+  return await tryCatch(async () => {
     const response = await fetch('/api/configurations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        name,
-        description,
-        isPublic,
-        totalSlots: config.totalSlots,
-        pricePerSpin: config.pricePerSpin,
-        defaultPrize: config.defaultPrize,
-        prizeConfigs: config.prizeConfigs
-      })
+      body: JSON.stringify(config)
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to save configuration: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    return result.id;
-  } catch (error) {
-    console.error('Error saving configuration:', error);
-    return null;
-  }
-}
-
-/**
- * Get all configurations
- * @returns Array of configurations, or empty array if an error occurred
- */
-export async function getConfigurations(): Promise<any[]> {
-  try {
-    const response = await fetch('/api/configurations');
-    
-    if (!response.ok) {
-      throw new Error(`Failed to get configurations: ${response.status}`);
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to save configuration');
     }
     
     return await response.json();
-  } catch (error) {
-    console.error('Error getting configurations:', error);
-    return [];
+  }) as Configuration;
+}
+
+/**
+ * Load a configuration by ID
+ * @param id - Configuration ID to load
+ * @returns Configuration data or null if not found
+ */
+export async function loadConfiguration(id: number): Promise<Configuration | null> {
+  const result = await tryCatch(async () => {
+    const response = await fetch(`/api/configurations/${id}`);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to load configuration');
+    }
+    
+    return await response.json();
+  });
+  
+  if (isErrorResponse(result)) {
+    throw new Error(result.message);
   }
+  
+  return result;
+}
+
+/**
+ * Get all public configurations
+ * @returns Array of public configurations
+ */
+export async function getPublicConfigurations(): Promise<Configuration[]> {
+  const result = await tryCatch(async () => {
+    const response = await fetch('/api/configurations/public');
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to load public configurations');
+    }
+    
+    return await response.json();
+  });
+  
+  if (isErrorResponse(result)) {
+    throw new Error(result.message);
+  }
+  
+  return result as Configuration[];
+}
+
+/**
+ * Get all configurations for the current user
+ * @returns Array of configurations
+ */
+export async function getUserConfigurations(): Promise<Configuration[]> {
+  const result = await tryCatch(async () => {
+    const response = await fetch('/api/configurations/user');
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to load user configurations');
+    }
+    
+    return await response.json();
+  });
+  
+  if (isErrorResponse(result)) {
+    throw new Error(result.message);
+  }
+  
+  return result as Configuration[];
 }
 
 /**
  * Delete a configuration
- * @param id - The ID of the configuration to delete
- * @returns Whether the deletion was successful
+ * @param id - Configuration ID to delete
+ * @returns Success status
  */
 export async function deleteConfiguration(id: number): Promise<boolean> {
-  try {
+  const result = await tryCatch(async () => {
     const response = await fetch(`/api/configurations/${id}`, {
       method: 'DELETE'
     });
     
-    return response.ok;
-  } catch (error) {
-    console.error('Error deleting configuration:', error);
-    return false;
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to delete configuration');
+    }
+    
+    return true;
+  });
+  
+  if (isErrorResponse(result)) {
+    throw new Error(result.message);
   }
+  
+  return result as boolean;
 }

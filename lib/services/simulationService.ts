@@ -1,221 +1,232 @@
 /**
  * Simulation Service
- * Handles the core logic for the roulette simulation
+ * Core logic for simulation calculations
  */
 
-import { 
-  PrizeConfig, 
-  PrizeHitResult, 
-  SpinResult,
+import {
   HouseStatsType,
-  SimulationStats
+  PrizeConfig,
+  SpinResult
 } from '../types/simulation';
 
 /**
- * Determines which prize was hit based on slot number
+ * Result of a prize hit calculation
+ */
+export interface PrizeHitResult {
+  prizeType: string;
+  prize: number;
+  profit: number;
+}
+
+/**
+ * Calculate which prize was hit based on slot number
  * @param slotNumber - The slot that was hit
  * @param prizeConfigs - Array of prize configurations
- * @param defaultPrize - The default prize amount
- * @returns Object containing prize details
+ * @param defaultPrize - Default prize value for slots not covered by prize configs
+ * @param costPerSpin - Cost per spin
+ * @param commissionFee - Platform commission fee percentage
+ * @returns Prize hit result containing prize type, value, and profit
  */
-export function determinePrizeHit(
-  slotNumber: number, 
-  prizeConfigs: PrizeConfig[] = [],
-  defaultPrize: number
+export function calculatePrizeHit(
+  slotNumber: number,
+  prizeConfigs: PrizeConfig[],
+  defaultPrize: number,
+  costPerSpin: number,
+  commissionFee: number
 ): PrizeHitResult {
-  let slotCounter = 0;
+  // Apply commission fee to the cost per spin
+  const adjustedCost = costPerSpin * (1 - commissionFee / 100);
   
-  // Check if the slot hit any of the special prize configurations
-  for (let i = 0; i < prizeConfigs.length; i++) {
-    const prizeConfig = prizeConfigs[i];
-    const startSlot = slotCounter + 1;
-    const endSlot = slotCounter + prizeConfig.slots;
+  // Track slot allocation
+  let slotsSoFar = 0;
+  
+  // Check if the slot falls within a prize configuration
+  for (const config of prizeConfigs) {
+    const configUpperBound = slotsSoFar + config.slots;
     
-    if (slotNumber >= startSlot && slotNumber <= endSlot) {
-      return { 
-        prize: prizeConfig.unitCost,
-        prizeType: prizeConfig.name,
-        prizeIndex: i,
-        isSpecialPrize: true,
-        relativeSlotIndex: slotNumber - startSlot // Position within this prize's slots
+    if (slotNumber > slotsSoFar && slotNumber <= configUpperBound) {
+      return {
+        prizeType: config.name,
+        prize: config.unitCost,
+        profit: adjustedCost - config.unitCost
       };
     }
     
-    slotCounter += prizeConfig.slots;
+    slotsSoFar = configUpperBound;
   }
   
-  // If no special prize was hit, return the default prize
-  return { 
-    prize: defaultPrize,
+  // If no specific prize configuration matches, use the default prize
+  return {
     prizeType: 'Default Prize',
-    isSpecialPrize: false,
-    relativeSlotIndex: slotNumber - slotCounter // Position within default slots
+    prize: defaultPrize,
+    profit: adjustedCost - defaultPrize
   };
 }
 
 /**
- * Calculate short-term risk based on current data
- * @param houseStats - Current house statistics
- * @param avgProfitPerSpin - Average profit per spin
+ * Calculate short-term risk based on current earnings
+ * @param earnings - Current total earnings
+ * @param prizeConfigs - Prize configurations
+ * @param defaultPrize - Default prize value
  * @param costPerSpin - Cost per spin
- * @param prizeConfigs - Array of prize configurations
- * @param defaultPrize - Default prize amount
+ * @param commissionFee - Platform commission fee percentage
  * @param totalSlots - Total number of slots
- * @param remainingSlots - Number of default slots remaining
- * @returns Probability of negative profit in next break
+ * @param simulationMode - Simulation mode
+ * @returns Probability of going negative in the next break
  */
 export function calculateShortTermRisk(
-  houseStats: HouseStatsType,
-  avgProfitPerSpin: number | null,
-  costPerSpin: number,
+  earnings: number,
   prizeConfigs: PrizeConfig[],
   defaultPrize: number,
+  costPerSpin: number,
+  commissionFee: number,
   totalSlots: number,
-  remainingSlots: number
+  simulationMode: 'normal' | 'removeHitSlots'
 ): number {
-  let shortTermRisk = 0;
-  
-  if (houseStats.totalSpins > 0 && avgProfitPerSpin !== null) {
-    // Using actual data to calculate risk
-    if (avgProfitPerSpin < 0) {
-      // We're already losing money on average, so risk is higher
-      shortTermRisk = Math.min(0.9, Math.abs(avgProfitPerSpin / costPerSpin) + 0.4);
-    } else if (houseStats.worstBreak && houseStats.worstBreak.profit < 0) {
-      // We've seen losing breaks before, so use that data
-      const worstBreakLossPerSpin = houseStats.worstBreak.profit / houseStats.worstBreak.spins;
-      shortTermRisk = Math.min(0.75, Math.abs(worstBreakLossPerSpin / costPerSpin) + 0.25);
-    } else {
-      // We haven't seen negative breaks yet, but there's still some risk
-      // Lower risk for higher positive profit per spin
-      shortTermRisk = Math.max(0.05, 0.15 - (avgProfitPerSpin / costPerSpin * 0.1));
-    }
-  } else {
-    // No spins yet, estimate based on prize configuration
-    const totalPrizeValue = prizeConfigs.reduce((sum, prize) => 
-      sum + prize.unitCost * prize.slots, 0) + defaultPrize * remainingSlots;
-    const avgPrizeValue = totalPrizeValue / totalSlots;
+  if (simulationMode === 'normal') {
+    // For normal mode, calculate risk of a single spin pushing earnings negative
+    if (earnings <= 0) return 1; // Already negative, risk is 100%
     
-    if (avgPrizeValue > costPerSpin) {
-      // If average prize is higher than cost, probability of loss is higher
-      shortTermRisk = Math.min(0.9, (avgPrizeValue / costPerSpin) * 0.7);
-    } else {
-      // Still some risk even with favorable expected value
-      shortTermRisk = Math.max(0.05, avgPrizeValue / costPerSpin * 0.4);
+    // Calculate the worst-case loss (highest prize payout)
+    let worstCasePrize = defaultPrize;
+    for (const config of prizeConfigs) {
+      if (config.unitCost > worstCasePrize) {
+        worstCasePrize = config.unitCost;
+      }
     }
+    
+    // Apply commission fee to the cost per spin
+    const adjustedCost = costPerSpin * (1 - commissionFee / 100);
+    const worstCaseProfit = adjustedCost - worstCasePrize;
+    
+    // If worst case profit is positive, no risk
+    if (worstCaseProfit >= 0) return 0;
+    
+    // Calculate how many worst-case losses would deplete earnings
+    const hitsToNegative = Math.ceil(earnings / Math.abs(worstCaseProfit));
+    
+    // Calculate probability of hitting exact slots with worst payout
+    const worstPrizeConfig = prizeConfigs.find(c => c.unitCost === worstCasePrize);
+    const worstPrizeSlotCount = worstPrizeConfig?.slots || 0;
+    const probabilityOfWorstCase = worstPrizeSlotCount / totalSlots;
+    
+    // Return probability of consecutive hits depleting earnings
+    return Math.pow(probabilityOfWorstCase, hitsToNegative);
+  } else {
+    // For removeHitSlots mode, calculate risk of next full break pushing earnings negative
+    if (earnings <= 0) return 1; // Already negative, risk is 100%
+    
+    // Get items with stopWhenHit true to determine break end condition
+    const stopWhenHitConfigs = prizeConfigs.filter(config => config.stopWhenHit);
+    if (stopWhenHitConfigs.length === 0) return 0; // No stop conditions, no break risk
+    
+    // Calculate the expected cost of a break
+    let expectedBreakCost = 0;
+    for (const config of stopWhenHitConfigs) {
+      // Expected spins to hit this prize is totalSlots / prize slots
+      expectedBreakCost += (totalSlots / config.slots) * (costPerSpin - defaultPrize);
+    }
+    
+    // Apply commission fee to the expected break cost
+    expectedBreakCost = expectedBreakCost * (1 - commissionFee / 100);
+    
+    // If break is profitable on average, no risk
+    if (expectedBreakCost <= 0) return 0;
+    
+    // If a break costs more than current earnings, high risk
+    if (expectedBreakCost >= earnings) return 0.75; // High but not certain
+    
+    // Calculate probability that a break costs more than average
+    // This is a simplified approximation
+    return (expectedBreakCost / earnings) * 0.5;
   }
-  
-  return shortTermRisk;
 }
 
 /**
- * Calculate break probabilities based on historical data
- * @param worstBreakSpins - Number of spins in worst break
- * @param bestBreakSpins - Number of spins in best break
- * @param totalBreaks - Total number of breaks
- * @param totalSlots - Total number of slots
- * @returns Object containing probability calculations
+ * Initialize or reset house statistics
+ * @returns Empty house statistics object
  */
-export function calculateBreakProbabilities(
-  worstBreakSpins: number,
-  bestBreakSpins: number,
-  totalBreaks: number,
-  totalSlots: number
-): { 
-  worstBreakProbability: number; 
-  bestBreakProbability: number; 
-  worstBreakSpinProbability: number; 
-  bestBreakSpinProbability: number; 
-} {
-  // Calculate probabilities based on actual occurrences if we have enough data
-  let worstBreakProbability = 0;
-  let bestBreakProbability = 0;
-  let worstBreakSpinProbability = 0;
-  let bestBreakSpinProbability = 0;
-  
-  if (totalBreaks > 0) {
-    // Calculate based on empirical frequency
-    // Higher numbers of observations give more accurate probabilities
-    if (totalBreaks >= 10) {
-      // More statistically significant with more data
-      worstBreakProbability = Math.max(0.01, 1 / totalBreaks);
-      bestBreakProbability = Math.max(0.01, 1 / totalBreaks);
-    } else {
-      // Conservative estimate with less data
-      worstBreakProbability = Math.max(0.05, 1 / (totalBreaks * 2));
-      bestBreakProbability = Math.max(0.05, 1 / (totalBreaks * 2));
-    }
-  } else {
-    // Theoretical probabilities if no breaks have occurred yet
-    worstBreakProbability = 0.1; // Default starting probabilities
-    bestBreakProbability = 0.1;
-  }
-  
-  // Probability based on consecutive spins (one spin after another)
-  if (worstBreakSpins > 0) {
-    worstBreakSpinProbability = Math.pow(1/totalSlots, worstBreakSpins);
-  }
-  
-  if (bestBreakSpins > 0) {
-    bestBreakSpinProbability = Math.pow(1/totalSlots, bestBreakSpins);
-  }
-  
+export function initializeHouseStats(): HouseStatsType {
   return {
-    worstBreakProbability,
-    bestBreakProbability,
-    worstBreakSpinProbability,
-    bestBreakSpinProbability
+    totalEarnings: 0,
+    totalSpins: 0,
+    prizeDistribution: {}
   };
 }
 
 /**
- * Get a valid slot that hasn't been hit yet
- * @param totalSlots - Total number of slots
- * @param hitSlots - Array of slots that have already been hit
- * @returns A valid slot number
+ * Update house statistics with a new spin result
+ * @param stats - Current house statistics
+ * @param result - New spin result
+ * @returns Updated house statistics
  */
-export function getValidRandomSlot(totalSlots: number, hitSlots: number[]): number {
-  // If all slots are hit, reset
-  if (hitSlots.length >= totalSlots) {
-    return Math.floor(Math.random() * totalSlots) + 1;
+export function updateHouseStats(stats: HouseStatsType, result: SpinResult): HouseStatsType {
+  // Create a copy to avoid mutating the original
+  const updatedStats = { ...stats };
+  
+  // Update basic counters
+  updatedStats.totalEarnings += result.profit;
+  updatedStats.totalSpins++;
+  
+  // Update prize distribution
+  if (!updatedStats.prizeDistribution[result.prizeType]) {
+    updatedStats.prizeDistribution[result.prizeType] = 0;
   }
+  updatedStats.prizeDistribution[result.prizeType]++;
   
-  // Try to find a slot that hasn't been hit yet
-  let attempts = 0;
-  let randomSlot;
-  do {
-    randomSlot = Math.floor(Math.random() * totalSlots) + 1;
-    attempts++;
-    
-    // Safety valve - if we've tried too many times, find first non-hit slot
-    if (attempts > 100) {
-      for (let i = 1; i <= totalSlots; i++) {
-        if (!hitSlots.includes(i)) {
-          return i;
-        }
-      }
-      return randomSlot; // Fallback
-    }
-  } while (hitSlots.includes(randomSlot));
-  
-  return randomSlot;
+  return updatedStats;
 }
 
 /**
- * Calculate house earnings after applying commission
- * @param costPerSpin - Cost per spin
- * @param prize - Prize amount
- * @param commissionFee - Commission fee percentage
- * @returns Net profit after commission
+ * Update house statistics with break performance data
+ * @param stats - Current house statistics
+ * @param spins - Number of spins in the break
+ * @param profit - Total profit from the break
+ * @param totalBreaks - Total number of breaks run so far
+ * @returns Updated house statistics with break performance data
  */
-export function calculateProfit(costPerSpin: number, prize: number, commissionFee: number): {
-  profit: number;
-  commissionAmount: number;
-} {
-  // Calculate commission amount (percentage of the cost per spin)
-  const commissionAmount = (costPerSpin * commissionFee) / 100;
+export function updateBreakPerformance(
+  stats: HouseStatsType,
+  spins: number,
+  profit: number,
+  totalBreaks: number
+): HouseStatsType {
+  // Create a copy to avoid mutating the original
+  const updatedStats = { ...stats };
   
-  // Calculate profit from house perspective (price received minus prize paid minus commission)
-  const profit = costPerSpin - prize - commissionAmount;
+  // Update totalBreaks count
+  updatedStats.totalBreaks = totalBreaks;
   
-  return { profit, commissionAmount };
+  // Calculate profit per spin for this break
+  const profitPerSpin = profit / spins;
+  
+  // Update best break if this is better than current best
+  if (
+    !updatedStats.bestBreak ||
+    (updatedStats.bestBreak && (profit / spins) > (updatedStats.bestBreak.profit / updatedStats.bestBreak.spins))
+  ) {
+    updatedStats.bestBreak = { spins, profit };
+    
+    // Calculate probability of seeing consecutive best breaks
+    if (totalBreaks > 0) {
+      updatedStats.bestBreakProbability = 1 / totalBreaks;
+      updatedStats.bestBreakSpinProbability = Math.pow(updatedStats.bestBreakProbability, spins);
+    }
+  }
+  
+  // Update worst break if this is worse than current worst
+  if (
+    !updatedStats.worstBreak ||
+    (updatedStats.worstBreak && (profit / spins) < (updatedStats.worstBreak.profit / updatedStats.worstBreak.spins))
+  ) {
+    updatedStats.worstBreak = { spins, profit };
+    
+    // Calculate probability of seeing consecutive worst breaks
+    if (totalBreaks > 0) {
+      updatedStats.worstBreakProbability = 1 / totalBreaks;
+      updatedStats.worstBreakSpinProbability = Math.pow(updatedStats.worstBreakProbability, spins);
+    }
+  }
+  
+  return updatedStats;
 }

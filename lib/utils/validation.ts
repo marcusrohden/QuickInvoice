@@ -1,109 +1,54 @@
 /**
  * Validation Utilities
- * Provides functions for validating user input
+ * Functions for validating user inputs
  */
 
 /**
- * Validate a number is within a range
+ * Validate that a number is positive
+ * @param value - The value to validate
+ * @param fieldName - Name of the field for error message
+ * @throws Error if validation fails
+ */
+export function validatePositiveNumber(value: number, fieldName: string): void {
+  if (isNaN(value) || value <= 0) {
+    throw new Error(`${fieldName} must be a positive number`);
+  }
+}
+
+/**
+ * Validate that a number is in a specific range
  * @param value - The value to validate
  * @param min - Minimum allowed value
  * @param max - Maximum allowed value
- * @returns Whether the value is valid
+ * @param fieldName - Name of the field for error message
+ * @throws Error if validation fails
  */
-export function validateNumberInRange(value: number, min: number, max?: number): boolean {
-  if (isNaN(value)) return false;
-  if (value < min) return false;
-  if (max !== undefined && value > max) return false;
-  return true;
+export function validateNumberInRange(value: number, min: number, max: number, fieldName: string): void {
+  if (isNaN(value) || value < min || value > max) {
+    throw new Error(`${fieldName} must be between ${min} and ${max}`);
+  }
 }
 
 /**
- * Validate a string is not empty and within a length range
+ * Validate that a string is not empty
  * @param value - The string to validate
- * @param minLength - Minimum length (default: 1)
- * @param maxLength - Maximum length (default: 100)
- * @returns Whether the string is valid
+ * @param fieldName - Name of the field for error message
+ * @throws Error if validation fails
  */
-export function validateString(value: string, minLength = 1, maxLength = 100): boolean {
-  if (!value) return false;
-  const trimmed = value.trim();
-  if (trimmed.length < minLength) return false;
-  if (trimmed.length > maxLength) return false;
-  return true;
+export function validateNotEmpty(value: string, fieldName: string): void {
+  if (!value || value.trim() === '') {
+    throw new Error(`${fieldName} cannot be empty`);
+  }
 }
 
 /**
- * Sanitize a number input to ensure it's within range
- * @param value - The value to sanitize
- * @param min - Minimum allowed value
- * @param max - Maximum allowed value
- * @param defaultValue - Default value if invalid
- * @returns Sanitized number value
+ * Validate that slots don't exceed available slots
+ * @param slots - The number of slots to allocate
+ * @param availableSlots - The number of available slots
+ * @throws Error if validation fails
  */
-export function sanitizeNumber(value: any, min: number, max?: number, defaultValue = min): number {
-  // Parse the value to a number if it's a string
-  const num = typeof value === 'string' ? parseFloat(value) : value;
-  
-  // Check if the result is a valid number
-  if (isNaN(num)) return defaultValue;
-  
-  // Enforce min/max bounds
-  if (num < min) return min;
-  if (max !== undefined && num > max) return max;
-  
-  return num;
-}
-
-/**
- * Sanitize a string input
- * @param value - The string to sanitize
- * @param maxLength - Maximum allowed length
- * @returns Sanitized string
- */
-export function sanitizeString(value: string, maxLength = 100): string {
-  if (!value) return '';
-  
-  // Trim whitespace and limit length
-  let sanitized = value.trim();
-  if (sanitized.length > maxLength) {
-    sanitized = sanitized.substring(0, maxLength);
-  }
-  
-  return sanitized;
-}
-
-/**
- * Validate a prize configuration
- * @param name - Prize name
- * @param value - Prize value
- * @param slots - Number of slots
- * @param availableSlots - Number of available slots
- * @returns Object with validation result and error message
- */
-export function validatePrizeConfig(
-  name: string,
-  value: number,
-  slots: number,
-  availableSlots: number
-): { isValid: boolean; errorMessage?: string } {
-  if (!validateString(name, 1, 50)) {
-    return { isValid: false, errorMessage: 'Prize name is required and must be between 1-50 characters' };
-  }
-  
-  if (!validateNumberInRange(value, 0)) {
-    return { isValid: false, errorMessage: 'Prize value must be a non-negative number' };
-  }
-  
-  if (!validateNumberInRange(slots, 1)) {
-    return { isValid: false, errorMessage: 'Prize slots must be at least 1' };
-  }
-  
+export function validateSlots(slots: number, availableSlots: number): void {
   if (slots > availableSlots) {
-    return { 
-      isValid: false, 
-      errorMessage: `Cannot add ${slots} slots. Only ${availableSlots} slots available.` 
-    };
+    throw new Error(`Cannot allocate more than ${availableSlots} slots`);
   }
-  
-  return { isValid: true };
 }
