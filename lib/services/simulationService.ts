@@ -16,6 +16,16 @@ export interface PrizeHitResult {
   prizeType: string;
   prize: number;
   profit: number;
+  isSpecialPrize?: boolean;
+  prizeIndex?: number;
+}
+
+/**
+ * Result of a profit calculation
+ */
+export interface ProfitResult {
+  profit: number;
+  commissionAmount: number;
 }
 
 /**
@@ -23,32 +33,28 @@ export interface PrizeHitResult {
  * @param slotNumber - The slot that was hit
  * @param prizeConfigs - Array of prize configurations
  * @param defaultPrize - Default prize value for slots not covered by prize configs
- * @param costPerSpin - Cost per spin
- * @param commissionFee - Platform commission fee percentage
- * @returns Prize hit result containing prize type, value, and profit
+ * @returns Prize hit result containing prize type, value, and profit information
  */
-export function calculatePrizeHit(
+export function determinePrizeHit(
   slotNumber: number,
   prizeConfigs: PrizeConfig[],
-  defaultPrize: number,
-  costPerSpin: number,
-  commissionFee: number
+  defaultPrize: number
 ): PrizeHitResult {
-  // Apply commission fee to the cost per spin
-  const adjustedCost = costPerSpin * (1 - commissionFee / 100);
-  
   // Track slot allocation
   let slotsSoFar = 0;
   
   // Check if the slot falls within a prize configuration
-  for (const config of prizeConfigs) {
+  for (let i = 0; i < prizeConfigs.length; i++) {
+    const config = prizeConfigs[i];
     const configUpperBound = slotsSoFar + config.slots;
     
     if (slotNumber > slotsSoFar && slotNumber <= configUpperBound) {
       return {
         prizeType: config.name,
         prize: config.unitCost,
-        profit: adjustedCost - config.unitCost
+        profit: 0, // Profit to be calculated later with cost information
+        isSpecialPrize: true,
+        prizeIndex: i
       };
     }
     
@@ -59,30 +65,108 @@ export function calculatePrizeHit(
   return {
     prizeType: 'Default Prize',
     prize: defaultPrize,
-    profit: adjustedCost - defaultPrize
+    profit: 0, // Profit to be calculated later with cost information
+    isSpecialPrize: false
   };
 }
 
 /**
- * Calculate short-term risk based on current earnings
- * @param earnings - Current total earnings
- * @param prizeConfigs - Prize configurations
- * @param defaultPrize - Default prize value
+ * Calculate profit from house perspective
  * @param costPerSpin - Cost per spin
+ * @param prizeCost - Cost of the prize
  * @param commissionFee - Platform commission fee percentage
- * @param totalSlots - Total number of slots
- * @param simulationMode - Simulation mode
- * @returns Probability of going negative in the next break
+ * @returns Profit result containing profit and commission amount
  */
-export function calculateShortTermRisk(
-  earnings: number,
+export function calculateProfit(
+  costPerSpin: number,
+  prizeCost: number,
+  commissionFee: number
+): ProfitResult {
+  const commissionAmount = (costPerSpin * commissionFee) / 100;
+  const adjustedCost = costPerSpin - commissionAmount;
+  const profit = adjustedCost - prizeCost;
+  
+  return {
+    profit,
+    commissionAmount
+  };
+}
+
+/**
+ * For backward compatibility - redirects to determinePrizeHit
+ * @deprecated Use determinePrizeHit instead
+ */
+export function calculatePrizeHit(
+  slotNumber: number,
   prizeConfigs: PrizeConfig[],
   defaultPrize: number,
   costPerSpin: number,
-  commissionFee: number,
+  commissionFee: number
+): PrizeHitResult {
+  const hitResult = determinePrizeHit(slotNumber, prizeConfigs, defaultPrize);
+  const adjustedCost = costPerSpin * (1 - commissionFee / 100);
+  hitResult.profit = adjustedCost - hitResult.prize;
+  return hitResult;
+}
+
+/**
+ * Get a valid random slot that hasn't been hit yet
+ * @param totalSlots - Total number of slots
+ * @param hitSlots - Array of already hit slot numbers
+ * @returns A valid slot number
+ */
+export function getValidRandomSlot(totalSlots: number, hitSlots: number[]): number {
+  if (hitSlots.length >= totalSlots) {
+    throw new Error('All slots have been hit');
+  }
+  
+  let attempts = 0;
+  const maxAttempts = totalSlots * 2; // Prevent infinite loop
+  
+  while (attempts < maxAttempts) {
+    const randomSlot = Math.floor(Math.random() * totalSlots) + 1;
+    if (!hitSlots.includes(randomSlot)) {
+      return randomSlot;
+    }
+    attempts++;
+  }
+  
+  // If we're here, we've made too many attempts. Find first available slot systematically
+  for (let i = 1; i <= totalSlots; i++) {
+    if (!hitSlots.includes(i)) {
+      return i;
+    }
+  }
+  
+  // This should never happen if hitSlots.length < totalSlots check is working
+  throw new Error('Could not find a valid slot');
+}
+
+/**
+ * Calculate short-term risk based on current earnings and configuration
+ * @param stats - House statistics or total earnings number
+ * @param avgProfitPerSpin - Average profit per spin or null if no spins
+ * @param costPerSpin - Cost per spin
+ * @param prizeConfigs - Prize configurations
+ * @param defaultPrize - Default prize value
+ * @param totalSlots - Total number of slots
+ * @param remainingSlots - Number of remaining slots after prize allocations
+ * @param simulationMode - Simulation mode ('normal' or 'removeHitSlots')
+ * @returns Probability of going negative in the next break
+ */
+export function calculateShortTermRisk(
+  stats: HouseStatsType | number,
+  avgProfitPerSpin: number | null,
+  costPerSpin: number,
+  prizeConfigs: PrizeConfig[],
+  defaultPrize: number,
   totalSlots: number,
-  simulationMode: 'normal' | 'removeHitSlots'
+  remainingSlots: number = 0,
+  simulationMode: 'normal' | 'removeHitSlots' = 'normal',
+  commissionFee: number = 0
 ): number {
+  // Extract earnings value from either a number or HouseStatsType
+  const earnings = typeof stats === 'number' ? stats : stats.totalEarnings;
   if (simulationMode === 'normal') {
     // For normal mode, calculate risk of a single spin pushing earnings negative
     if (earnings <= 0) return 1; // Already negative, risk is 100%
@@ -96,7 +180,7 @@ export function calculateShortTermRisk(
     }
     
     // Apply commission fee to the cost per spin
-    const adjustedCost = costPerSpin * (1 - commissionFee / 100);
+    const adjustedCost = costPerSpin * (1 - (commissionFee / 100));
     const worstCaseProfit = adjustedCost - worstCasePrize;
     
     // If worst case profit is positive, no risk
@@ -178,6 +262,45 @@ export function updateHouseStats(stats: HouseStatsType, result: SpinResult): Hou
 }
 
 /**
+ * Calculate break probabilities based on best and worst breaks
+ * @param worstBreakSpins - Number of spins in the worst break
+ * @param bestBreakSpins - Number of spins in the best break
+ * @param totalBreaks - Total number of breaks run
+ * @param totalSlots - Total number of slots
+ * @returns Object containing break and spin probabilities
+ */
+export interface BreakProbabilities {
+  worstBreakProbability: number;
+  bestBreakProbability: number;
+  worstBreakSpinProbability: number;
+  bestBreakSpinProbability: number;
+}
+
+export function calculateBreakProbabilities(
+  worstBreakSpins: number,
+  bestBreakSpins: number,
+  totalBreaks: number,
+  totalSlots: number
+): BreakProbabilities {
+  // Calculate break occurrence probabilities (simple frequency method)
+  const worstBreakProbability = totalBreaks > 0 ? 1 / totalBreaks : 0;
+  const bestBreakProbability = totalBreaks > 0 ? 1 / totalBreaks : 0;
+  
+  // Calculate spin-based probabilities (probability of all sequences)
+  const worstBreakSpinProbability = worstBreakSpins > 0 ? 
+    Math.pow(worstBreakProbability, worstBreakSpins) : 0;
+  const bestBreakSpinProbability = bestBreakSpins > 0 ? 
+    Math.pow(bestBreakProbability, bestBreakSpins) : 0;
+  
+  return {
+    worstBreakProbability,
+    bestBreakProbability,
+    worstBreakSpinProbability,
+    bestBreakSpinProbability
+  };
+}
+
+/**
  * Update house statistics with break performance data
  * @param stats - Current house statistics
  * @param spins - Number of spins in the break
@@ -191,6 +314,10 @@ export function updateBreakPerformance(
   profit: number,
   totalBreaks: number
 ): HouseStatsType {
+  if (spins <= 0) {
+    return stats; // Don't update with invalid data
+  }
+  
   // Create a copy to avoid mutating the original
   const updatedStats = { ...stats };
   
@@ -203,7 +330,7 @@ export function updateBreakPerformance(
   // Update best break if this is better than current best
   if (
     !updatedStats.bestBreak ||
-    (updatedStats.bestBreak && (profit / spins) > (updatedStats.bestBreak.profit / updatedStats.bestBreak.spins))
+    (updatedStats.bestBreak && profitPerSpin > (updatedStats.bestBreak.profit / updatedStats.bestBreak.spins))
   ) {
     updatedStats.bestBreak = { spins, profit };
     
@@ -217,7 +344,7 @@ export function updateBreakPerformance(
   // Update worst break if this is worse than current worst
   if (
     !updatedStats.worstBreak ||
-    (updatedStats.worstBreak && (profit / spins) < (updatedStats.worstBreak.profit / updatedStats.worstBreak.spins))
+    (updatedStats.worstBreak && profitPerSpin < (updatedStats.worstBreak.profit / updatedStats.worstBreak.spins))
   ) {
     updatedStats.worstBreak = { spins, profit };
     
